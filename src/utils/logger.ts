@@ -12,7 +12,7 @@ const alignColorsAndTime = winston.format.combine(
         format:"YY-MM-DD HH:mm:ss"
     }),
     winston.format.printf(
-        info => ` ${correlator?.getId() || '[no-id]'} ${info['label']}  ${info['timestamp']}  ${info.level} : ${info.message}`
+        info => `${correlator?.getId() || ''} ${info['label']}  ${info['timestamp']}  ${info.level} : ${info.message}`.trim()
     )
 );
 
