@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { ShutdownEvent } from "./shutdown";
 import { app } from "./app";
 import { APPLICATION_PORT } from "./config";
