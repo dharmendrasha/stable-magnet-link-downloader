@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Logger } from 'typeorm/logger/Logger'
 import { logger } from './logger'
 import { PlatformTools } from 'typeorm/platform/PlatformTools'
 import { LoggerOptions, QueryRunner } from 'typeorm'
+
 
 export class DBLogger implements Logger {
   private logger = logger
