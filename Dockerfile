@@ -29,6 +29,7 @@ COPY --from=base /app/node_modules node_modules
 COPY --from=base /app/dist dist
 
 ENV PORT=80
+ENV IS_DOCKER=true
 
 RUN apt update -y && \
     apt install curl -y

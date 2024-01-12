@@ -1,5 +1,9 @@
 version: "3.*"
 
+volumes:
+  db:
+    external: false
+
 services:
   api:
     build:
@@ -9,4 +13,30 @@ services:
       - .env
     ports:
       - 3000:80
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16.1-alpine3.19
+    restart: always
+    ports:
+      - 5437:5432
+    volumes:
+      - db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: magnet
+      POSTGRES_USER: admin
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: 'Asia/Kolkata'
+
+  adminer:
+    image: adminer
+    restart: always
+    environment:
+        TZ: 'Asia/Kolkata'
+    depends_on:
+      - db
+    ports:
+      - 8080:8080
       
