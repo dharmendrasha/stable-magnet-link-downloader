@@ -1,0 +1,10 @@
+{
+    "eslint.codeActionsOnSave.mode": "all",
+    "eslint.debug": true,
+    "eslint.enable": true,
+    "eslint.format.enable": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": true
+    },
+    "eslint.validate": ["javascript", "typescript"]
+}

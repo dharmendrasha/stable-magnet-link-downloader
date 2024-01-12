@@ -2,12 +2,14 @@ import { NextFunction, Request, Response } from "express";
 import correlator from "express-correlation-id";
 import RequestIp from "request-ip";
 import { logger } from "../logger";
+import { hostname } from "os";
+
 
 
 function handleReponseFinish(res: Response, req: Request, perf: number) {
     const { method, originalUrl } = req
     const ip = RequestIp.getClientIp(req)
-    const hostname = require('os').hostname()
+    const hName = hostname()
     const userAgent = req.get('user-agent') || ''
     const referer = req.get('referer') || ''
     const { statusCode } = res
@@ -15,7 +17,7 @@ function handleReponseFinish(res: Response, req: Request, perf: number) {
     const perfEnd = Number(performance.now() - perf).toFixed(3)
 
     logger.info(
-      `[${hostname}] method=${method} url='${originalUrl}' performance=${perfEnd}ms statusCode='${statusCode}'  contentLength='${contentLength}'  refer='${referer}' user_agenet='${userAgent}' ip='${ip}'`,
+      `[${hName}] method=${method} url='${originalUrl}' performance=${perfEnd}ms statusCode='${statusCode}'  contentLength='${contentLength}'  refer='${referer}' user_agenet='${userAgent}' ip='${ip}'`,
     )
   }
 
