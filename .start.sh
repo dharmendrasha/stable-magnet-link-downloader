@@ -15,6 +15,12 @@ if [ "$TO_DO" = "--generate" ]; then
   exit 0
 fi
 
+if [ "$TO_DO" = "--build" ]; then
+  echo "generating migration for=$ONLY"
+  npm run build && cd dist && ls -al && cd ..
+  exit 0
+fi
+
 if [ "$TO_DO" = "--migrate" ]; then
   echo "migrating pending db schema"
   npm run typeorm:migration-up
