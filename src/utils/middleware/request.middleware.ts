@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import correlator from "express-correlation-id";
 import RequestIp from "request-ip";
-import { logger } from "../logger";
+import { logger } from "../logger.js";
 import { hostname } from "os";
 
 

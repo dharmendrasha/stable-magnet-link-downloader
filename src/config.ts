@@ -10,6 +10,8 @@ export const DB_HOST = env['DB_HOST'] || 'localhost'
 export const DB_PORT = Number(env['DB_PORT'] || 5432)
 export const DB_LOGGING = env['DB_LOGGING'] || 'error'
 
+export const METADATA_FETCH_TIMEOUT = Number(env['METADATA_FETCH_TIMEOUT'] || 6000); // in ms
+
 
 
 export const dbLogging = (): LoggerOptions => {

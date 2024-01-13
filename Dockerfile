@@ -30,6 +30,7 @@ COPY --from=base /app/dist dist
 
 ENV PORT=80
 ENV IS_DOCKER=true
+ENV NODE_OPTIONS="--trace-warnings --trace-deprecation"
 
 RUN apt update -y && \
     apt install curl -y
