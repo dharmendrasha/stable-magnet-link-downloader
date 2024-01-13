@@ -45,7 +45,7 @@ export const isValidTorrentData: RequestHandler = async (req, res, next) => {
   next();
 };
 
-export const errorHandler: ErrorRequestHandler = (err, _req, res, _) => {
+export const errorHandler: ErrorRequestHandler = (err, _req, res) => {
   logger.error("Error occurred while processing request");
   console.error(err);
   res.status(500).json({ error: "Server error." });

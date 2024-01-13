@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type ParsedTorrent = string | ArrayBufferView | Record<string, any>;
 
 declare module "parse-torrent" {
