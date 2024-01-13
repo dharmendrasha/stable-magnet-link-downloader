@@ -5,6 +5,8 @@ on:
   pull_request:
     types:
       - opened
+      - edited
+      - reopened
     paths:
       - 'src/**/**/**' # run only if the app folder is chaged
       - 'package.json'
