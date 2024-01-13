@@ -2,11 +2,7 @@ name: CI
 
 on:
   workflow_dispatch:
-  pull_request:
-    types:
-      - opened
-      - edited
-      - reopened
+  push:
     paths:
       - 'src/**/**/**' # run only if the app folder is chaged
       - 'package.json'
