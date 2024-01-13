@@ -14,6 +14,9 @@ export class MagnetRequests extends BaseEntity{
     @Column({ type: 'text' })
     link!: string
 
+    @Column({type: 'varchar', unique: true})
+    hash!: string
+
     @Column({ type: 'enum', enum: STATUS, default: STATUS.IN_PROGRESS})
     status!: STATUS
 
@@ -24,7 +27,7 @@ export class MagnetRequests extends BaseEntity{
     @Column({ type: 'numeric'})
     size!: number
 
-    @Column({type: 'text'})
+    @Column({type: 'text', nullable: true})
     saved_location!: string
 
     @Column({type: 'jsonb'})

@@ -3,6 +3,11 @@ import { DataSource, DataSourceOptions } from 'typeorm'
 import * as path from 'path'
 import { DBLogger } from './utils/db-logger.js'
 import { entities } from './entity/index.js'
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export const datasourceConfig: DataSourceOptions = {
     type: 'postgres',
@@ -13,7 +18,7 @@ export const datasourceConfig: DataSourceOptions = {
     database: DB_NAME,
     entities: entities,
     synchronize: false,
-    migrations: [path.join('migration/*.ts')],
+    migrations: [path.join(__dirname, '/migration/*.ts')],
     logNotifications: true,
     installExtensions: true,
     logging: dbLogging(),

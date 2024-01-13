@@ -43,16 +43,27 @@ export const constructData = (torrent: Torrent) :TorrentInfo => {
   };
 
 
+  export async function ifExists(info: TorrentInfo){
+    const repo = getRepository(MagnetRequests)
+    const available = await repo.findOne({where: {hash: info.infoHash}})
+    return available
+  }
+  
+
 export async function saveToTheDatabase(info: TorrentInfo){
+
     const repo = getRepository(MagnetRequests)
     const created = repo.create({
         link: info.magnetURI,
         name: info.name,
         size: -1,
-        info: info
+        info: info,
+        hash: info.infoHash
     })
 
-    return repo.save(created)
+    return repo.upsert(created, {
+      conflictPaths: ['hash']
+    })
 }
 
 /**
@@ -89,13 +100,22 @@ export async function AcceptTorrent(req: Request, res: Response){
     const info = constructData(torrent)
 
     //submit info into the database
-    saveToTheDatabase(info)
+    saveToTheDatabase(info).then(() => {
+      res.json({ data: info });
 
-    res.json({ data: info });
+      torClient().remove(torrent, {}, () => {
+          logger.info("Torrent removed.");
+      });
+    }).catch((e) => {
+      logger.error(e)
+      res.status(504).json({
+        data: constructData(torrent),
+        message:
+          "something unwanted happen please try again or contact administrator.",
+      });
+    })
 
-    torClient().remove(torrent, {}, () => {
-        logger.info("Torrent removed.");
-    });
+   
   });
 
 }
