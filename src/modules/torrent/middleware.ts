@@ -1,6 +1,6 @@
 import { ErrorRequestHandler, RequestHandler } from "express";
 import parseTorrent from "parse-torrent";
-import { logger } from '../../utils/logger'
+import { logger } from '../../utils/logger.js'
 
 export const isValidTorrentData: RequestHandler = async (req, res, next) => {
     logger.info("Validating torrent query...");

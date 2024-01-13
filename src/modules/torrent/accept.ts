@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
-import { torClient } from "../../utils/torrent/webtorrent";
+import { torClient } from "../../utils/torrent/webtorrent.js";
 import { Torrent } from "webtorrent";
-import { METADATA_FETCH_TIMEOUT } from "../../config";
-import { logger } from "../../utils/logger";
-import { getRepository } from "../../utils/db";
-import { MagnetRequests } from "../../entity";
+import { METADATA_FETCH_TIMEOUT } from "../../config.js";
+import { logger } from "../../utils/logger.js";
+import { getRepository } from "../../utils/db.js";
+import { MagnetRequests } from "../../entity/index.js";
 
 export interface TorrentInfo{
     name: string;

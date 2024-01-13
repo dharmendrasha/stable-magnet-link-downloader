@@ -1,9 +1,9 @@
 import "reflect-metadata";
-import { ShutdownEvent } from "./shutdown";
-import { app } from "./app";
-import { APPLICATION_PORT } from "./config";
-import { logger } from "./utils/logger";
-import {appDatasource} from './typeorm.config';
+import { ShutdownEvent } from "./shutdown.js";
+import { app } from "./app.js";
+import { APPLICATION_PORT } from "./config.js";
+import { logger } from "./utils/logger.js";
+import appDatasource from './typeorm.config.js';
 
 appDatasource.initialize().then(() => {
     logger.info(`connected to the database`)
@@ -13,4 +13,5 @@ appDatasource.initialize().then(() => {
     ShutdownEvent(server)
 }).catch(e => {
     logger.error(`unable to connect with the database`, e)
+    process.exit(1)
 })

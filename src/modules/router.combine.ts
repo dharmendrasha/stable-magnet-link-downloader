@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { router as mainRouter } from "./main/router";
-import { router as torrentRouter } from "./torrent/route";
+import { router as mainRouter } from "./main/router.js";
+import { router as torrentRouter } from "./torrent/route.js";
 
 const expressRouter = Router()
 

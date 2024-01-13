@@ -1,9 +1,9 @@
 import Express from "express";
 import correlator from "express-correlation-id";
-import { RequestMiddleware } from "./utils/middleware/request.middleware";
+import { RequestMiddleware } from "./utils/middleware/request.middleware.js";
 import BodyParser from "body-parser";
-import { mainExprouter } from "./router";
-import { errorHandler } from "./modules/torrent/middleware";
+import { mainExprouter } from "./router/index.js";
+import { errorHandler } from "./modules/torrent/middleware.js";
 
 
 const app = Express()

@@ -1,8 +1,8 @@
-import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, dbLogging } from './config'
+import { DB_HOST, DB_NAME, DB_PASSWORD, DB_PORT, DB_USER, dbLogging } from './config.js'
 import { DataSource, DataSourceOptions } from 'typeorm'
 import * as path from 'path'
-import { DBLogger } from './utils/db-logger'
-import { entities } from './entity'
+import { DBLogger } from './utils/db-logger.js'
+import { entities } from './entity/index.js'
 
 export const datasourceConfig: DataSourceOptions = {
     type: 'postgres',
@@ -22,6 +22,6 @@ export const datasourceConfig: DataSourceOptions = {
   
 export const pgString = `${datasourceConfig.type}://${datasourceConfig.username}:${datasourceConfig.password}@${datasourceConfig.host}:${datasourceConfig.port}/${datasourceConfig.database}`
 
-export const appDatasource = new DataSource(datasourceConfig)
+const appDatasource = new DataSource(datasourceConfig)
 
 export default appDatasource

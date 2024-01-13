@@ -1,5 +1,5 @@
-import { TorrentInfo, constructData } from "../modules/torrent/accept";
-import { BaseEntity } from "./base";
+import { TorrentInfo } from "../modules/torrent/accept.js";
+import { BaseEntity } from "./base.js";
 import { Entity, Column } from 'typeorm'
 
 export enum STATUS {

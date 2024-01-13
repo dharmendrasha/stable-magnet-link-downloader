@@ -1,5 +1,5 @@
 import { ObjectLiteral, EntityTarget } from 'typeorm';
-import { appDatasource } from '../typeorm.config';
+import appDatasource from '../typeorm.config.js';
 
 export const getDataSource = () => {
     if(!appDatasource.isInitialized){
