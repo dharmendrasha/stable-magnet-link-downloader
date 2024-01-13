@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { validate } from "../../utils/validate";
-import { AcceptTorrent, schema } from "./accept";
+import { AcceptTorrent } from "./accept";
+import multer from "multer";
+import { isValidTorrentData } from "./middleware";
+const upload = multer();
 
 const router = Router()
 
-router.post('/v1/accept', validate(schema), AcceptTorrent)
+router.post('/v1/accept', upload.single("torrent_file"), isValidTorrentData, AcceptTorrent)
 
 
 export { router }

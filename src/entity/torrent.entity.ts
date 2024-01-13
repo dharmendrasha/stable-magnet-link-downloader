@@ -1,3 +1,4 @@
+import { TorrentInfo, constructData } from "../modules/torrent/accept";
 import { BaseEntity } from "./base";
 import { Entity, Column } from 'typeorm'
 
@@ -19,9 +20,13 @@ export class MagnetRequests extends BaseEntity{
     @Column({ type: 'varchar', length: 300})
     name!: string
 
+    // -1 means unindentified
     @Column({ type: 'numeric'})
     size!: number
 
     @Column({type: 'text'})
     saved_location!: string
+
+    @Column({type: 'jsonb'})
+    info!: TorrentInfo
 }

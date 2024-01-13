@@ -1,15 +1,59 @@
-import { z } from 'zod'
 import { Request, Response } from "express";
+import { torClient } from "../../utils/torrent/webtorrent";
+import { Torrent } from "webtorrent";
+import { METADATA_FETCH_TIMEOUT } from "../../config";
+import { logger } from "../../utils/logger";
+import { getRepository } from "../../utils/db";
+import { MagnetRequests } from "../../entity";
 
-export const BodySchema = z.object({
-    magnet_url: z
-    .string({required_error: 'magnet_url required it should be like this magnet:?xt=urn:btih:[file hash]'})
-    .regex(/magnet:\?xt=urn:[a-z0-9]+:[a-z0-9]{32}/i, 'magnet_url is invalid please paste the correct url. It should be like this magnet:?xt=urn:btih:[file hash]')
-})
+export interface TorrentInfo{
+    name: string;
+      infoHash: string;
+      magnetURI: string;
+      peers: number
+      created: Date
+      createdBy: string
+      comment: string
+      announce: string[]
+      files: {
+        name: string
+        size: number
+        path: string
+      }[],
+}
 
-export const schema = z.object({
-    body: BodySchema
-})
+export const constructData = (torrent: Torrent) :TorrentInfo => {
+    const data = {
+      name: torrent.name,
+      infoHash: torrent.infoHash,
+      magnetURI: torrent.magnetURI,
+      peers: torrent.numPeers,
+      created: torrent.created,
+      createdBy: torrent.createdBy,
+      comment: torrent.comment,
+      announce: torrent.announce,
+      files: torrent.files.map((file) => ({
+        name: file.name,
+        size: file.length,
+        path: file.path,
+      })),
+    };
+  
+    return data;
+  };
+
+
+export async function saveToTheDatabase(info: TorrentInfo){
+    const repo = getRepository(MagnetRequests)
+    const created = repo.create({
+        link: info.magnetURI,
+        name: info.name,
+        size: -1,
+        info: info
+    })
+
+    return repo.save(created)
+}
 
 /**
  * this function should accept  magnet url
@@ -17,8 +61,41 @@ export const schema = z.object({
 
 export async function AcceptTorrent(req: Request, res: Response){
 
-    const body = req.body as z.infer<typeof BodySchema>
-    // const parseMagnetInstance = parseTorrent(body.magnet_url)
+    const parsedTorrent = req.parsedTorrent;
 
-    res.send(body)
+    const torrent = torClient().add(parsedTorrent, {
+        destroyStoreOnDestroy: true,
+    });
+
+  // If the torrent doesn't have enough peers to retrieve metadata, return
+  // limited info we get from parsing the magnet URI (the parsed metadata is guaranteed
+  // to have `infoHash` field)
+  const timeoutID = setTimeout(async () => {
+    res.status(504).json({
+      data: constructData(torrent),
+      message:
+        "The torrent provided doesn't seem to have enough peers to fetch metadata. Returning limited info.",
+    });
+
+    torClient().remove(torrent, {}, () => {
+      logger.info("Timeout while fetching torrent metadata.");
+    });
+  }, METADATA_FETCH_TIMEOUT);
+
+
+  torrent.on("metadata", () => {
+    logger.info("Metadata parsed...");
+    clearTimeout(timeoutID);
+    const info = constructData(torrent)
+
+    //submit info into the database
+    saveToTheDatabase(info)
+
+    res.json({ data: info });
+
+    torClient().remove(torrent, {}, () => {
+        logger.info("Torrent removed.");
+    });
+  });
+
 }

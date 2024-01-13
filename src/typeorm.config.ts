@@ -13,15 +13,15 @@ export const datasourceConfig: DataSourceOptions = {
     database: DB_NAME,
     entities: entities,
     synchronize: false,
-    migrations: [path.join(__dirname, './migration/*.ts')],
+    migrations: [path.join('migration/*.ts')],
     logNotifications: true,
     installExtensions: true,
     logging: dbLogging(),
     logger: new DBLogger(dbLogging()),
-  }
+}
   
 export const pgString = `${datasourceConfig.type}://${datasourceConfig.username}:${datasourceConfig.password}@${datasourceConfig.host}:${datasourceConfig.port}/${datasourceConfig.database}`
 
-  
+export const appDatasource = new DataSource(datasourceConfig)
 
-export default new DataSource(datasourceConfig)
+export default appDatasource

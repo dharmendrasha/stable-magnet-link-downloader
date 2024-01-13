@@ -6,7 +6,7 @@ import {
   } from 'typeorm'
   
   export abstract class BaseEntity {
-    @PrimaryGeneratedColumn('increment', { type: 'bigint' })
+    @PrimaryGeneratedColumn('uuid')
     id!: string
   
     @Column({ type: 'boolean', default: true })
