@@ -1,7 +1,7 @@
-import { MagnetRequests } from "./torrent.entity";
+import { MagnetRequests } from "./torrent.entity.js";
 
 export const entities = [
     MagnetRequests
 ]
 
-export * from './torrent.entity'
+export * from './torrent.entity.js'

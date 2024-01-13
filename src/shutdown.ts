@@ -1,4 +1,4 @@
-import { logger } from './utils/logger';
+import { logger } from './utils/logger.js';
 import { IncomingMessage, Server, ServerResponse } from 'http';
 
 // @to-do: docker kill --signal="SIGHUP" [id] is not working

@@ -1,7 +1,10 @@
 import { Router } from "express";
-import { router } from "./main/router";
+import { router as mainRouter } from "./main/router.js";
+import { router as torrentRouter } from "./torrent/route.js";
 
 const expressRouter = Router()
 
-expressRouter.use(router)
+expressRouter.use(mainRouter)
+expressRouter.use(torrentRouter)
+
 export { expressRouter }
