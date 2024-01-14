@@ -6,7 +6,8 @@ export enum STATUS {
     IN_PROGRESS = 'in_progress',
     PAUSED = 'paused',
     FAILED = 'failed',
-    completed = 'completed'
+    completed = 'completed',
+    NOTED = 'noted'
 }
 
 @Entity({ name: 'magnet_requests' })
@@ -17,7 +18,7 @@ export class MagnetRequests extends BaseEntity{
     @Column({type: 'varchar', unique: true})
     hash!: string
 
-    @Column({ type: 'enum', enum: STATUS, default: STATUS.IN_PROGRESS})
+    @Column({ type: 'enum', enum: STATUS, default: STATUS.NOTED})
     status!: STATUS
 
     @Column({ type: 'varchar', length: 300})
