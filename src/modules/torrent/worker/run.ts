@@ -1,25 +1,35 @@
 import { Worker } from 'node:worker_threads'
 import PQueue from 'p-queue'
 import { optimalNumThreads } from '../../../utils/calculate-worker-threads.js'
-import { NODE_ENV } from '../../../config.js'
+import { logger } from '../../../utils/logger.js'
+import { TORRENT_TIMEOUT } from '../../../config.js'
+import { q, q_name } from '../../../utils/queue/bull.js'
+import { Job } from 'bull'
+
+export type WorkerData = { data: string, contextId: string}
+
 
 const queue = new PQueue({ concurrency: optimalNumThreads })
 
-export function runWorker<T>(filenameWithoutExtension: URL, workerData?: unknown) {
-  return queue.add(async () => {
+q.process(q_name, optimalNumThreads, (job: Job<{filenameWithoutExtension: string, workerData: WorkerData}>) => {
+  const data = job.data
+  queue.add(async () => {
+    job.progress(0)
+    const worker = new Worker(new URL(`${data.filenameWithoutExtension}.js`), { workerData:data.workerData })
 
-    const worker =
-        NODE_ENV === 'dev'
-        ? new Worker(new URL(`${filenameWithoutExtension}.ts`), {
-            workerData,
-            execArgv: ['--import', 'tsx/esm']
-          })
-        : new Worker(new URL(`${filenameWithoutExtension}.js`), { workerData })
-
-    const result = await new Promise<T>((resolve, reject) => {
-      worker.on('message', resolve)
-      worker.on('error', reject)
+    const result = await new Promise((resolve, reject) => {
+      worker.on('message', (value) => {
+        logger.info(`worker sent a message ${value}`)
+        logger.info(`worker sent a message of type ${typeof value}`)
+        job.progress(100)
+        resolve(value)
+      })
+      worker.on('error', (er) => {
+        logger.error(`worker throws an error`, er)
+        reject(er)
+      })
       worker.on('exit', code => {
+        logger.warn('worker exited code ' + code)
         if (code !== 0) {
           reject(new Error(`Worker stopped with exit code ${code}`))
         }
@@ -27,5 +37,10 @@ export function runWorker<T>(filenameWithoutExtension: URL, workerData?: unknown
     })
 
     return result
-  })
+  }, {timeout: TORRENT_TIMEOUT, throwOnTimeout: true})
+})
+
+
+export function runWorker(filenameWithoutExtension: URL, workerData: WorkerData) {
+  return q.add(q_name, {filenameWithoutExtension, workerData}, { timeout: TORRENT_TIMEOUT})
 }

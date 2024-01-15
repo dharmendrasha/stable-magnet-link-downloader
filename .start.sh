@@ -8,6 +8,15 @@ TO_DO="${1:-'no'}"
 
 ONLY="${2:-'no'}"
 
+
+if [ "$TO_DO" = "--install" ]; then
+  echo "installing deps for=$ONLY"
+  npm i $ONLY
+  echo "installing dev deps for=$ONLY if any"
+  npm i -D @types/$ONLY
+  exit 0
+fi
+
 # Simple if condition
 if [ "$TO_DO" = "--generate" ]; then
   echo "generating migration for=$ONLY"
@@ -47,7 +56,7 @@ fi
 
 echo "starting the required local containers"
 
-docker compose --file $(pwd)/docker-compose.yml up adminer db -d
+docker compose --file $(pwd)/docker-compose.yaml up adminer db redis -d
 
 echo "setting up local env"
 

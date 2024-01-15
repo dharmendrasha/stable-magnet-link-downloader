@@ -16,6 +16,10 @@ export const schema = z.object({
 export async function downloadTorrent(req: Request, res: Response){
     const bdy = req.body as z.infer<typeof body>
 
+    if(!correlator.getId()){
+        throw new Error(`no correlator.getId() found`)
+    }
+
     // check in the database
     const available = await ifExists(bdy.hash)
 
@@ -35,45 +39,13 @@ export async function downloadTorrent(req: Request, res: Response){
     }
     
     //https://github.com/piscinajs/piscina
-    const result = await runWorker(
+    runWorker(
         new URL('./worker/download', import.meta.url),
         {
             data: available.link,
-            contextId: correlator.getId()
+            contextId: `req:${correlator?.getId()}`
         },
       )
-
-      console.log(result)
-
-    // start downloading the file
-    // const worker = new Worker(resolve(__dirname, 'worker/download.js'), {
-    //     workerData: {
-    //         data: available.link,
-    //         contextId: correlator.getId()
-    //     }
-    // })
-
-    // worker.on('message', (val) => {
-    //     logger.info(`got message from worker value = ${val}`);
-    // })
-
-    // worker.on('error', (err) => {
-    //     logger.error(`received error from worker thread`, err)
-    // })
-
-    // worker.on('exit', (exitCode) => {
-    //     logger.error(`worker has been exited by code `, exitCode)
-    // })
-
-    // worker.on('messageerror', (err) => {
-    //     logger.error(`worker message error`, err)
-    // })
-
-
-    // worker.on('online', () => {
-    //     logger.info(`worker is now online`)
-    // })
-
 
     res.jsonp(bdy)
 }

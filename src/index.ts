@@ -15,7 +15,8 @@ appDatasource.initialize().then(() => {
     logger.info(`Optimal number of worker threads: ${optimalNumThreads}`)
     
     const server = app.listen(APPLICATION_PORT, '0.0.0.0', () => {
-        return logger.info(`application started visit = http://0.0.0.0:${APPLICATION_PORT}`);
+        logger.info(`application started visit = http://0.0.0.0:${APPLICATION_PORT}`);
+        logger.info(`For the UI, open http://0.0.0.0:${APPLICATION_PORT}/admin/queues`)
     })
     
     ShutdownEvent(server)

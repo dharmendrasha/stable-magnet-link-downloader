@@ -11,6 +11,15 @@ export const DB_PORT = Number(env['DB_PORT'] || 5432)
 export const DB_LOGGING = env['DB_LOGGING'] || 'error'
 export const METADATA_FETCH_TIMEOUT = Number(env['METADATA_FETCH_TIMEOUT'] || 6000); // in ms
 
+export const TORRENT_TIMEOUT = Number(env['TORRENT_TIMEOUT'] || 86400000 /* one day */)
+
+export const ADMIN_USER = env['ADMIN_USER'] || 'user'
+export const ADMIN_PASS = env['ADMIN_PASS'] || 'pass'
+
+export const REDIS_HOST = env['REDIS_HOST'] || 'localhost'
+export const REDIS_PORT = Number(env['REDIS_PORT'] || '6379')
+export const REDIS_PASSWORD = env['REDIS_PASSWORD'] || ''
+
 export const dbLogging = (): LoggerOptions => {
   
     const shouldDbLog = DB_LOGGING
@@ -30,4 +39,6 @@ export const getDownloadPath = () => {
   const dnldPath = env['DOWNLOAD_PATH'] || `${process.cwd()}/.downloads`
   return dnldPath
 }
+
+
   
