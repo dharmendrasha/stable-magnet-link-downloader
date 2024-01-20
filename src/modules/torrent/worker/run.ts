@@ -1,46 +1,65 @@
-import { Worker } from 'node:worker_threads'
-import PQueue from 'p-queue'
-import { optimalNumThreads } from '../../../utils/calculate-worker-threads.js'
-import { logger } from '../../../utils/logger.js'
-import { TORRENT_TIMEOUT } from '../../../config.js'
-import { q, q_name } from '../../../utils/queue/bull.js'
-import { Job } from 'bull'
+import { getRepository } from "../../../utils/db.js";
+import {
+  JOB_DELAY,
+  MAX_RETRY,
+  RETRY_DELAY,
+  RETRY_STARATEGY,
+  TORRENT_TIMEOUT,
+  WORKER_CONCURRENCY,
+  WORKER_LIMIER,
+} from "../../../config.js";
+import { createLoggerWithContext } from "../../../utils/logger.js";
+import { q, q_name, redis } from "../../../utils/queue/bull.js";
+import { Worker } from "bullmq";
+import { MagnetRequests } from "../../../entity/torrent.entity.js";
 
-export type WorkerData = { data: string, contextId: string}
+const workerLogger = createLoggerWithContext(q_name);
 
+export type WorkerData = {
+  data: string;
+  contextId: string;
+  id: string;
+  job_id?: string;
+};
 
-const queue = new PQueue({ concurrency: optimalNumThreads })
+export const worker = new Worker(
+  q_name,
+  new URL("./download.js", import.meta.url),
+  {
+    connection: redis,
+    //Amount of jobs that a single worker is allowed to work on
+    concurrency: WORKER_CONCURRENCY,
+    useWorkerThreads: true,
+    stalledInterval: TORRENT_TIMEOUT,
+    autorun: false,
+    limiter: {
+      max: WORKER_LIMIER,
+      duration: TORRENT_TIMEOUT,
+    },
+  },
+);
 
-q.process(q_name, optimalNumThreads, (job: Job<{filenameWithoutExtension: string, workerData: WorkerData}>) => {
-  const data = job.data
-  queue.add(async () => {
-    job.progress(0)
-    const worker = new Worker(new URL(`${data.filenameWithoutExtension}.js`), { workerData:data.workerData })
+worker
+  .run()
+  .then(() => {
+    workerLogger.info(`woker is running`);
+  })
+  .catch((e) => {
+    workerLogger.error(`worker could not run because`, e);
+  });
 
-    const result = await new Promise((resolve, reject) => {
-      worker.on('message', (value) => {
-        logger.info(`worker sent a message ${value}`)
-        logger.info(`worker sent a message of type ${typeof value}`)
-        job.progress(100)
-        resolve(value)
-      })
-      worker.on('error', (er) => {
-        logger.error(`worker throws an error`, er)
-        reject(er)
-      })
-      worker.on('exit', code => {
-        logger.warn('worker exited code ' + code)
-        if (code !== 0) {
-          reject(new Error(`Worker stopped with exit code ${code}`))
-        }
-      })
-    })
+export async function addJob(workerData: WorkerData) {
+  const repo = getRepository(MagnetRequests);
 
-    return result
-  }, {timeout: TORRENT_TIMEOUT, throwOnTimeout: true})
-})
+  const job = await q.add(q_name, workerData, {
+    attempts: MAX_RETRY,
+    delay: JOB_DELAY, // delay for 1 sec
+    backoff: {
+      delay: RETRY_DELAY,
+      type: RETRY_STARATEGY,
+    },
+  });
+  await repo.update({ id: workerData.id }, { job_id: job.id });
 
-
-export function runWorker(filenameWithoutExtension: URL, workerData: WorkerData) {
-  return q.add(q_name, {filenameWithoutExtension, workerData}, { timeout: TORRENT_TIMEOUT})
+  return job;
 }

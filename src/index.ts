@@ -2,28 +2,66 @@ import "reflect-metadata";
 import { ShutdownEvent } from "./shutdown.js";
 import { app } from "./app.js";
 import { APPLICATION_PORT, getDownloadPath } from "./config.js";
-import { logger } from "./utils/logger.js";
-import appDatasource from './typeorm.config.js';
+import { createLoggerWithContext, logger } from "./utils/logger.js";
+import appDatasource from "./typeorm.config.js";
 import { optimalNumThreads } from "./utils/calculate-worker-threads.js";
+import { worker } from "./modules/torrent/worker/run.js";
+import { q, redis } from "./utils/queue/bull.js";
 
-appDatasource.initialize().then(() => {
+process.on("uncaughtException", function (err) {
+  const logger = createLoggerWithContext("uncaughtException");
+  // Handle the error safely
+  logger.error(err);
+});
 
-    logger.info(`connected to the database`)
-    
-    logger.info(`download path ${getDownloadPath()}`)
-    
-    logger.info(`Optimal number of worker threads: ${optimalNumThreads}`)
-    
-    const server = app.listen(APPLICATION_PORT, '0.0.0.0', () => {
-        logger.info(`application started visit = http://0.0.0.0:${APPLICATION_PORT}`);
-        logger.info(`For the UI, open http://0.0.0.0:${APPLICATION_PORT}/admin/queues`)
-    })
-    
-    ShutdownEvent(server)
+process.on("unhandledRejection", (reason, promise) => {
+  const logger = createLoggerWithContext("unhandledRejection");
 
-}).catch(e => {
+  // Handle the error safely
+  logger.error({ reason, promise });
+});
 
-    logger.error(`unable to connect with the database`, e)
+appDatasource
+  .initialize()
+  .then(async () => {
+    logger.info(`connected to the database`);
 
-    process.exit(1)
-})
+    logger.info(`download path ${getDownloadPath()}`);
+
+    logger.info(`Optimal number of worker threads: ${optimalNumThreads}`);
+
+    logger.info(`redis connection status=${redis.status}`);
+
+    if (redis.status !== "ready") {
+      await redis.connect();
+    }
+
+    const workerIsPaused = worker.isPaused();
+    const workerIsRunning = worker.isRunning();
+
+    logger.info(
+      `workerStatus isPaused=${workerIsPaused} isRunning=${workerIsRunning}`,
+    );
+
+    if (!workerIsRunning) {
+      await q.resume();
+      logger.info(`q is resumed`);
+      await worker.waitUntilReady();
+    }
+
+    const server = app.listen(APPLICATION_PORT, "0.0.0.0", () => {
+      logger.info(
+        `application started visit = http://0.0.0.0:${APPLICATION_PORT}`,
+      );
+      logger.info(
+        `For the UI, open http://0.0.0.0:${APPLICATION_PORT}/admin/queues`,
+      );
+    });
+
+    ShutdownEvent(server);
+  })
+  .catch((e) => {
+    logger.error(`unable to connect with the database`, e);
+
+    process.exit(1);
+  });

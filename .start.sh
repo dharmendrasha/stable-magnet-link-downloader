@@ -24,6 +24,13 @@ if [ "$TO_DO" = "--generate" ]; then
   exit 0
 fi
 
+if [ "$TO_DO" = "--dev" ]; then
+  echo "prod"
+  env-cmd -f .env npm run dev
+  exit 0
+fi
+
+
 if [ "$TO_DO" = "--prod" ]; then
   echo "prod"
   env-cmd -f .env npm run start
@@ -51,6 +58,11 @@ fi
 
 if [ "$TO_DO" = "--install" ]; then
   npm install
+  exit 0
+fi
+
+if [ "$TO_DO" = "--flush" ]; then
+  rm -rf .downloads
   exit 0
 fi
 

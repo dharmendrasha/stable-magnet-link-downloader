@@ -1,9 +1,9 @@
 import { ErrorRequestHandler, RequestHandler } from "express";
 import parseTorrent from "parse-torrent";
-import { logger } from '../../utils/logger.js'
+import { logger } from "../../utils/logger.js";
 
 export const isValidTorrentData: RequestHandler = async (req, res, next) => {
-    logger.info("Validating torrent query...");
+  logger.info("Validating torrent query...");
 
   const hashOrURIQuery = req.body.query as string;
   const torrentFileQuery = req.file;
@@ -17,10 +17,10 @@ export const isValidTorrentData: RequestHandler = async (req, res, next) => {
 
   if (hashOrURIQuery) {
     try {
-        logger.info("Parsing hash or URI...");
+      logger.info("Parsing hash or URI...");
       req.parsedTorrent = await parseTorrent(hashOrURIQuery);
     } catch (err) {
-        logger.info(err);
+      logger.info(err);
       return res.status(400).json({
         error: "Invalid info hash or magnet URI.",
         query: hashOrURIQuery,
@@ -30,10 +30,10 @@ export const isValidTorrentData: RequestHandler = async (req, res, next) => {
 
   if (torrentFileQuery) {
     try {
-        logger.info("Parsing torrent file...");
+      logger.info("Parsing torrent file...");
       req.parsedTorrent = await parseTorrent(torrentFileQuery.buffer);
     } catch (err) {
-        logger.info(err);
+      logger.info(err);
       return res.status(400).json({
         error: "Torrent file is invalid.",
         query: torrentFileQuery.originalname,

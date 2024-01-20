@@ -1,51 +1,52 @@
 import { Request, Response } from "express";
-import { z } from 'zod'
+import { z } from "zod";
 import { GetMetaDataOfTorrent, ifExists } from "./accept.js";
 import { STATUS } from "../../entity/torrent.entity.js";
 import correlator from "express-correlation-id";
-import { runWorker } from "./worker/run.js";
+import { addJob } from "./worker/run.js";
 
 export const body = z.object({
-    hash: z.string()
-})
+  hash: z.string(),
+});
 
 export const schema = z.object({
-    body
-})
+  body,
+});
 
-export async function downloadTorrent(req: Request, res: Response){
-    const bdy = req.body as z.infer<typeof body>
+export async function downloadTorrent(req: Request, res: Response) {
+  const bdy = req.body as z.infer<typeof body>;
 
-    if(!correlator.getId()){
-        throw new Error(`no correlator.getId() found`)
-    }
+  if (!correlator.getId()) {
+    throw new Error(`no correlator.getId() found`);
+  }
 
-    // check in the database
-    const available = await ifExists(bdy.hash)
+  // check in the database
+  const available = await ifExists(bdy.hash);
 
-    if(!available){
-        return res.status(404).jsonp({body: null, message: 'hash not found'})
-    }
+  if (!available) {
+    return res.status(404).jsonp({ body: null, message: "hash not found" });
+  }
 
+  //reverify it
+  await GetMetaDataOfTorrent(available.link).catch(() => {
+    return res.status(405).jsonp({
+      body: null,
+      message: "link seems to be expired or no peers left to download",
+    });
+  });
 
+  if (![STATUS.NOTED, STATUS.PAUSED].includes(available.status)) {
+    return res.status(406).jsonp({
+      body: null,
+      message: `file cannot be downloaded because its already been ${available.status.toLocaleLowerCase()}`,
+    });
+  }
 
-    //reverify it
-    await GetMetaDataOfTorrent(available.link).catch(() => {
-        return res.status(405).jsonp({body: null, message: 'link seems to be expired or no peers left to download'})
-    })
+  await addJob({
+    data: available.link,
+    contextId: `req:${correlator?.getId()}`,
+    id: available.id,
+  });
 
-    if(![STATUS.NOTED, STATUS.PAUSED].includes(available.status)){
-        return res.status(406).jsonp({body: null, message: `file cannot be downloaded because its already been ${available.status.toLocaleLowerCase()}`})
-    }
-    
-    //https://github.com/piscinajs/piscina
-    runWorker(
-        new URL('./worker/download', import.meta.url),
-        {
-            data: available.link,
-            contextId: `req:${correlator?.getId()}`
-        },
-      )
-
-    res.jsonp(bdy)
+  return res.jsonp(bdy);
 }

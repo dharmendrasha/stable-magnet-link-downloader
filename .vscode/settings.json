@@ -3,6 +3,8 @@
     "eslint.debug": true,
     "eslint.enable": true,
     "eslint.format.enable": true,
+    "typescript.tsdk": "node_modules/typescript/lib",
+    "typescript.enablePromptUseWorkspaceTsdk": true,
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": "explicit"
     },
