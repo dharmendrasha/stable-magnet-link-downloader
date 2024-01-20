@@ -48,7 +48,8 @@ export const getDownloadPath = () => {
 };
 
 // Firebase
-export const FIREBASE_FILE = env["FIREBASE_ADMIN_FILE"] || ".firebase.json";
+export const FIREBASE_FILE =
+  env["FIREBASE_ADMIN_FILE"] || `${process.cwd()}/.firebase.json`;
 
 export const FIREBASE_REALTIME =
   env["FIREBASE_REALTIME"] ||
