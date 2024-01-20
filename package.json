@@ -10,6 +10,7 @@
     "watch-compile": "tsc -w",
     "watch-dev": "PORT=3000 env-cmd -f .env nodemon --watch \"dist/**/*\" -e js ./dist/index.js",
     "build": "tsc",
+    "precommit": "lint-staged",
     "start": "node dist/index.js",
     "typeorm": "env-cmd -f .env typeorm-ts-node-esm",
     "typeorm:migration-up": "npm run typeorm migration:run -- -d ./src/typeorm.config.ts",
@@ -17,7 +18,14 @@
     "typeorm:migration-generate": "npm run typeorm -- -d ./src/typeorm.config.ts migration:generate ./src/migration/$FOR",
     "typeorm:migration-up-fake": "npm run typeorm -- -d ./src/typeorm.config.ts migration:run --fake",
     "typeorm:create-migration": "npm run typeorm -- migration:create ./src/migration/$FOR",
-    "typeorm:revert-migration": "npm run typeorm -- -d ./src/typeorm.config.ts migration:revert"
+    "typeorm:revert-migration": "npm run typeorm -- -d ./src/typeorm.config.ts migration:revert",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ]
   },
   "keywords": [],
   "author": "git@elitale.com",
@@ -49,6 +57,8 @@
     "eslint-plugin-prettier": "^5.1.3",
     "eslint-plugin-promise": "^6.1.1",
     "eslint-plugin-require-extensions": "^0.1.3",
+    "husky": "^8.0.3",
+    "lint-staged": "^15.2.0",
     "nodemon": "^3.0.2",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
