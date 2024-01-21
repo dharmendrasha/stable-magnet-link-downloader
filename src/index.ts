@@ -5,8 +5,7 @@ import { APPLICATION_PORT, getDownloadPath } from "./config.js";
 import { createLoggerWithContext, logger } from "./utils/logger.js";
 import appDatasource from "./typeorm.config.js";
 import { optimalNumThreads } from "./utils/calculate-worker-threads.js";
-import { worker } from "./modules/torrent/worker/run.js";
-import { q, redis } from "./utils/queue/bull.js";
+import { redis } from "./utils/queue/bull.js";
 
 process.on("uncaughtException", function (err) {
   const logger = createLoggerWithContext("uncaughtException");
@@ -34,19 +33,6 @@ appDatasource
 
     if (redis.status !== "ready") {
       await redis.connect();
-    }
-
-    const workerIsPaused = worker.isPaused();
-    const workerIsRunning = worker.isRunning();
-
-    logger.info(
-      `workerStatus isPaused=${workerIsPaused} isRunning=${workerIsRunning}`,
-    );
-
-    if (!workerIsRunning) {
-      await q.resume();
-      logger.info(`q is resumed`);
-      await worker.waitUntilReady();
     }
 
     const server = app.listen(APPLICATION_PORT, "0.0.0.0", () => {

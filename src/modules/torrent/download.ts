@@ -35,7 +35,9 @@ export async function downloadTorrent(req: Request, res: Response) {
     });
   });
 
-  if (![STATUS.NOTED, STATUS.PAUSED].includes(available.status)) {
+  if (
+    [STATUS.NOTED, STATUS.PAUSED, STATUS.IN_QUEUE].includes(available.status)
+  ) {
     return res.status(406).jsonp({
       body: null,
       message: `file cannot be downloaded because its already been ${available.status.toLocaleLowerCase()}`,

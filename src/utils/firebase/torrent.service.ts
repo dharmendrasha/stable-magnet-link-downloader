@@ -3,6 +3,20 @@ import { firestore, realtime, admin, app } from "./app.js";
 import { randomUUID } from "crypto";
 import { S3Util } from "../aws/s3/main.js";
 import winston from "winston";
+import { STATUS } from "../../entity/torrent.entity.js";
+// import { getRepository } from "../db.js";
+
+export type IUpdateData = {
+  progress?: number;
+  is_error?: boolean;
+  updated_at?: number;
+  message?: string;
+  status?: STATUS;
+  size?: number;
+  torhash?: string;
+  filename?: string;
+  tree?: object | null;
+};
 
 export class NotFoundException extends Error {
   constructor(m: string) {
@@ -31,8 +45,12 @@ export class TorService {
     return doc.set(data);
   }
 
-  update(hash: string, data: object) {
+  update(hash: string, data: IUpdateData) {
     const doc = this.getCollection().doc(hash);
+
+    // update the pg db
+    // const repo = getRepository(TorrentEn)
+
     return doc.update(data);
   }
 

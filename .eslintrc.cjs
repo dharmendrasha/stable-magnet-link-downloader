@@ -10,7 +10,7 @@ module.exports = {
     "prettier",
   ],
   parser: "@typescript-eslint/parser",
-  plugins: ["@typescript-eslint", "require-extensions", "prettier"],
+  plugins: ["@typescript-eslint", "require-extensions", "prettier", "promise"],
   overrides: [
     {
       env: {

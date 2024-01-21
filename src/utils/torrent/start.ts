@@ -14,6 +14,7 @@ import { S3Util } from "../aws/s3/main.js";
 import { NotAcceptableException } from "../Error.js";
 import { directoryTree } from "../directree.js";
 import { SandboxedJob } from "bullmq";
+import { STATUS } from "../../entity/torrent.entity.js";
 
 export type FileStored = {
   files: string[];
@@ -87,9 +88,9 @@ export class MagnetQueue {
           this.torService.deleteProgress(hash),
           this.torService.update(hash, {
             progress: 100,
-            isError: true,
-            errorMessage: typeof err === "string" ? err : err.message,
-            status: "failed",
+            is_error: true,
+            message: typeof err === "string" ? err : err.message,
+            status: STATUS.FAILED,
           }),
         ]);
         reject(err);
@@ -103,10 +104,10 @@ export class MagnetQueue {
         );
 
         this.torService.update(hash, {
-          filesize: torrent.length,
+          size: torrent.length,
           torhash: torrent.infoHash,
           filename: torrent.name,
-          updatedAt: Date.now(),
+          updated_at: Date.now(),
         });
 
         // Track download progress
@@ -205,10 +206,10 @@ export class MagnetQueue {
           this.torService.deleteProgress(hash),
           this.torService.update(hash, {
             progress: 100,
-            isError: true,
-            updatedAt: Date.now(),
-            errorMessage: "not enough peers found to download the file.",
-            status: "failed",
+            is_error: true,
+            updated_at: Date.now(),
+            message: "not enough peers found to download the file.",
+            status: STATUS.FAILED,
           }),
         ]);
 
@@ -230,11 +231,10 @@ export class MagnetQueue {
           this.torService.deleteProgress(hash),
           this.torService.update(hash, {
             progress: 100,
-            isError: true,
-            updatedAt: Date.now(),
-            errorMessage:
-              "unable to download the files due to connection errors",
-            status: "failed",
+            is_error: true,
+            updated_at: Date.now(),
+            message: "unable to download the files due to connection errors",
+            status: STATUS.FAILED,
           }),
         ]);
 
@@ -261,12 +261,12 @@ export class MagnetQueue {
       await Promise.allSettled([
         this.torService.deleteProgress(hash),
         this.torService.update(hash, {
-          filesize: savedFiles.size,
+          size: savedFiles.size,
           progress: 100,
           torhash: savedFiles.torHash,
           tree,
-          status: "done",
-          updatedAt: Date.now(),
+          status: STATUS.completed,
+          updated_at: Date.now(),
         }),
       ]);
 
