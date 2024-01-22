@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { GetMetaDataOfTorrent, ifExists } from "./accept.js";
+import { ifExists } from "./accept.js";
 import { STATUS } from "../../entity/torrent.entity.js";
 import correlator from "express-correlation-id";
 import { addJob } from "./worker/run.js";
 
 export const body = z.object({
   hash: z.string(),
+  retry: z.boolean().default(false),
 });
 
 export const schema = z.object({
@@ -27,16 +28,14 @@ export async function downloadTorrent(req: Request, res: Response) {
     return res.status(404).jsonp({ body: null, message: "hash not found" });
   }
 
-  //reverify it
-  await GetMetaDataOfTorrent(available.link).catch(() => {
-    return res.status(405).jsonp({
-      body: null,
-      message: "link seems to be expired or no peers left to download",
-    });
-  });
-
   if (
-    [STATUS.NOTED, STATUS.PAUSED, STATUS.IN_QUEUE].includes(available.status)
+    [
+      STATUS.COMPLETED,
+      STATUS.IN_QUEUE,
+      STATUS.FAILED,
+      STATUS.IN_PROGRESS,
+    ].includes(available.status) &&
+    bdy.retry === false
   ) {
     return res.status(406).jsonp({
       body: null,

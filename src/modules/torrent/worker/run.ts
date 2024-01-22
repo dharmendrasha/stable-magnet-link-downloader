@@ -1,32 +1,35 @@
-import { getRepository } from "../../../utils/db.js";
+import wtfNode from "wtfnode";
+wtfNode.init();
 import {
-  JOB_DELAY,
   MAX_RETRY,
   RETRY_DELAY,
   RETRY_STARATEGY,
-  TORRENT_TIMEOUT,
-  WORKER_CONCURRENCY,
-  WORKER_LIMIER,
+  // TORRENT_TIMEOUT,
+  // WORKER_CONCURRENCY,
+  // WORKER_LIMIER,
 } from "../../../config.js";
 import { createLoggerWithContext } from "../../../utils/logger.js";
 import { q, q_name, redis } from "../../../utils/queue/bull.js";
 import { Worker, Job } from "bullmq";
 import { MagnetRequests, STATUS } from "../../../entity/torrent.entity.js";
+import { getRepository } from "../../../utils/db.js";
+import { optimalNumThreads } from "../../../utils/calculate-worker-threads.js";
 
 const workerLogger = createLoggerWithContext(q_name);
 
-export async function addJob(workerData: WorkerData) {
-  const repo = getRepository(MagnetRequests);
+const repo = () => getRepository(MagnetRequests);
 
+export async function addJob(workerData: WorkerData) {
   const job = await q.add(q_name, workerData, {
     attempts: MAX_RETRY,
-    delay: JOB_DELAY, // delay for 1 sec
+    priority: 1,
+    delay: 0, // delay for 1 sec
     backoff: {
       delay: RETRY_DELAY,
       type: RETRY_STARATEGY,
     },
   });
-  await repo.update(
+  await repo().update(
     { id: workerData.id },
     { job_id: job.id, status: STATUS.IN_QUEUE },
   );
@@ -45,16 +48,10 @@ export const worker = new Worker(
   q_name,
   new URL("./download.js", import.meta.url),
   {
-    connection: redis,
-    //Amount of jobs that a single worker is allowed to work on
-    concurrency: WORKER_CONCURRENCY,
+    concurrency: optimalNumThreads,
     useWorkerThreads: true,
-    stalledInterval: TORRENT_TIMEOUT,
-    autorun: true,
-    limiter: {
-      max: WORKER_LIMIER,
-      duration: TORRENT_TIMEOUT,
-    },
+    connection: redis,
+    autorun: false,
   },
 );
 
@@ -75,13 +72,45 @@ const eventsType: any[] = [
 ];
 
 for (const event of eventsType) {
-  worker.on(event, (j: Job<WorkerData>) => {
-    const data = j?.data;
+  worker.on(event, async (j: Job<WorkerData>, err?: Error) => {
+    const id = j?.id;
 
-    console.log(data);
+    if (event === "progress") {
+      return;
+    }
+    workerLogger.info(`${event}: got the event=${event} id=${id}`);
 
-    console.log(j);
+    // update the db if paused
 
-    workerLogger.info(`got the event=${event}`);
+    if (event === "paused") {
+      const data = j?.data;
+      if (!data) {
+        workerLogger.error(`paused: no data found`);
+        return;
+      }
+      const id = data.id;
+      await repo().update({ id }, { status: STATUS.PAUSED });
+    }
+
+    if (event === "completed") {
+      const data = j?.data;
+      if (!data) {
+        workerLogger.error(`completed: no data found`);
+        return;
+      }
+    }
+
+    if (event === "failed") {
+      const data = j?.data;
+      if (!data) {
+        workerLogger.error(`failed: no data found`);
+        return;
+      }
+      const id = data.id;
+      await repo().update(
+        { id },
+        { status: STATUS.FAILED, message: err?.message },
+      );
+    }
   });
 }

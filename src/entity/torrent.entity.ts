@@ -6,7 +6,7 @@ export enum STATUS {
   IN_PROGRESS = "in_progress",
   PAUSED = "paused",
   FAILED = "failed",
-  completed = "completed",
+  COMPLETED = "completed",
   NOTED = "noted",
   IN_QUEUE = "in_queue",
 }
@@ -39,7 +39,7 @@ export class MagnetRequests extends BaseEntity {
   job_id!: string | null;
 
   @Column({ type: "jsonb", nullable: true })
-  tree!: object | null;
+  tree!: unknown;
 
   @Column({ type: "varchar", nullable: true })
   message!: string | null;

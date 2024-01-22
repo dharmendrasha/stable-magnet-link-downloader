@@ -26,7 +26,10 @@ fi
 
 if [ "$TO_DO" = "--dev" ]; then
   echo "prod"
-  env-cmd -f .env npm run dev
+  if [ "$ONLY" = "--restart" ]; then
+  docker compose down redis --down
+  fi
+  docker compose up api
   exit 0
 fi
 
@@ -45,7 +48,7 @@ fi
 
 if [ "$TO_DO" = "--migrate" ]; then
   echo "migrating pending db schema"
-  npm run typeorm:migration-up
+  docker compose run -it api npm run typeorm:migration-up
   exit 0
 fi
 

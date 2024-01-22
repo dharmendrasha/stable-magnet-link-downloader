@@ -3,8 +3,8 @@ import { firestore, realtime, admin, app } from "./app.js";
 import { randomUUID } from "crypto";
 import { S3Util } from "../aws/s3/main.js";
 import winston from "winston";
-import { STATUS } from "../../entity/torrent.entity.js";
-// import { getRepository } from "../db.js";
+import { MagnetRequests, STATUS } from "../../entity/torrent.entity.js";
+import { getRepository } from "../db.js";
 
 export type IUpdateData = {
   progress?: number;
@@ -25,6 +25,8 @@ export class NotFoundException extends Error {
 }
 
 export class TorService {
+  protected repo = () => getRepository(MagnetRequests);
+
   constructor(private logger: winston.Logger) {}
 
   private getCollection() {
@@ -45,11 +47,35 @@ export class TorService {
     return doc.set(data);
   }
 
-  update(hash: string, data: IUpdateData) {
+  async updateInprogressInDb(hash: string) {
+    await this.repo().update({ id: hash }, { status: STATUS.IN_PROGRESS });
+  }
+
+  async update(hash: string, data: IUpdateData) {
     const doc = this.getCollection().doc(hash);
 
-    // update the pg db
-    // const repo = getRepository(TorrentEn)
+    // in progress
+    // failed
+    if (data.status === STATUS.FAILED) {
+      // update
+      await this.repo().update(
+        { id: hash },
+        { status: STATUS.FAILED, message: data.message },
+      );
+    }
+
+    if (data.status === STATUS.COMPLETED) {
+      await this.repo().update(
+        { id: hash },
+        {
+          status: STATUS.COMPLETED,
+          message: data.message || "",
+          tree: { ...data.tree },
+          size: data.size,
+        },
+      );
+    }
+    // completed
 
     return doc.update(data);
   }

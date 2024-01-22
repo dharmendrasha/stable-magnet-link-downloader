@@ -4,3 +4,5 @@ node_modules
 .DS_Store
 .downloads
 .firebase.json
+*.logs
+worker

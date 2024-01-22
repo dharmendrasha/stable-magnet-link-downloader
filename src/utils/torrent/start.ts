@@ -82,9 +82,9 @@ export class MagnetQueue {
     hash: string,
   ) {
     const savedFiles: FileStored = await new Promise((resolve, reject) => {
-      client.on("error", (err) => {
+      client.on("error", async (err) => {
         logger.error(err);
-        Promise.allSettled([
+        await Promise.allSettled([
           this.torService.deleteProgress(hash),
           this.torService.update(hash, {
             progress: 100,
@@ -92,29 +92,35 @@ export class MagnetQueue {
             message: typeof err === "string" ? err : err.message,
             status: STATUS.FAILED,
           }),
-        ]);
-        reject(err);
+        ])
+          .then(() => {
+            reject(err);
+          })
+          .catch((e) => reject(e));
       });
 
       const filePath = path.resolve(this.tempPath, hash);
 
-      client.add(magnetLink, { path: filePath }, (torrent) => {
+      client.add(magnetLink, { path: filePath }, async (torrent) => {
         logger.info(
           `Downloading: path=${filePath} name=${torrent.name} filesize=${torrent.length} hash=${torrent.infoHash}`,
         );
 
-        this.torService.update(hash, {
-          size: torrent.length,
-          torhash: torrent.infoHash,
-          filename: torrent.name,
-          updated_at: Date.now(),
-        });
+        await Promise.allSettled([
+          this.torService.updateInprogressInDb(hash),
+          this.torService.update(hash, {
+            size: torrent.length,
+            torhash: torrent.infoHash,
+            filename: torrent.name,
+            updated_at: Date.now(),
+          }),
+        ]);
 
         // Track download progress
-        torrent.on("download", () => {
+        torrent.on("download", async () => {
           const percent = (torrent.progress * 100).toFixed(2);
           // logger.debug(`downloadProgress=${percent}%`);
-          Promise.allSettled([
+          await Promise.allSettled([
             this.job.updateProgress(Number(percent)),
             this.torService.progress(hash, {
               progress: Number(percent),
@@ -178,7 +184,8 @@ export class MagnetQueue {
         );
         const fileRead = fs.createReadStream(localfile);
         await S3Util.parrallelUpload(remotePath, fileRead);
-        fs.unlinkSync(localfile);
+
+        // fs.unlinkSync(localfile);
 
         return { remotePath, file: file, bucket: AWS_BUCKET };
       }),
@@ -259,26 +266,27 @@ export class MagnetQueue {
       await this.uploadFilesToS3(hash, savedFiles, logger);
 
       await Promise.allSettled([
+        this.job.updateProgress(100),
         this.torService.deleteProgress(hash),
         this.torService.update(hash, {
           size: savedFiles.size,
           progress: 100,
           torhash: savedFiles.torHash,
-          tree,
-          status: STATUS.completed,
+          tree: tree,
+          status: STATUS.COMPLETED,
           updated_at: Date.now(),
         }),
       ]);
 
       logger.info(`finished`);
-      this.job.updateProgress(100);
+      return Promise.resolve(tree);
     } catch (e) {
       if (e instanceof Error) {
         logger.error(e.message, e.stack);
       } else {
         logger.error(`error processing information`, e);
       }
-      throw e;
+      return Promise.reject(e);
     }
   }
 }

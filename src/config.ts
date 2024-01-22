@@ -51,9 +51,7 @@ export const getDownloadPath = () => {
 export const FIREBASE_FILE =
   env["FIREBASE_ADMIN_FILE"] || `${process.cwd()}/.firebase.json`;
 
-export const FIREBASE_REALTIME =
-  env["FIREBASE_REALTIME"] ||
-  "https://seeder-267cc-default-rtdb.asia-southeast1.firebasedatabase.app";
+export const FIREBASE_REALTIME = env["FIREBASE_REALTIME"];
 
 //AWS
 export const AWS_REGION = env["AWS_REGION"] || "ap-south-1";
@@ -65,9 +63,13 @@ export const MAGNET_DOWNLOAD_PROCESS = "MAGNET_DOWNLOAD_PROCESS";
 
 export const MAX_RETRY = Number(env["MAX_RETRY"] || 3);
 export const RETRY_DELAY = Number(env["RETRY_DELAY"] || 1000); // milliseconds
+
 export const RETRY_STARATEGY = String(
   env["RETRY_STARATEGY"] || "exponential",
 ) as BackoffOptions["type"];
+
 export const JOB_DELAY = Number(env["JOB_DELAY"] || 1000);
+
 export const WORKER_CONCURRENCY = Number(env["WORKER_CONCURRENCY"] || 1);
+
 export const WORKER_LIMIER = Number(env["WORKER_LIMIER"] || 1);

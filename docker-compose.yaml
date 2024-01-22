@@ -5,18 +5,29 @@ volumes:
     driver: local
   db:
     driver: local
+  api:
+    driver: local
 
 services:
   api:
     build:
       context: .
       dockerfile: Dockerfile
+      target: base
+    command: ["npm", "run", "dev"]
     env_file:
       - .env
+    volumes:
+      - ./src:/app/src
+      - ./dist:/app/dist
+      - ./.downloads:/downloads
+      - api:/app/node_modules
     ports:
       - 3000:80
+      - 9229:9229
     depends_on:
       - db
+      - redis
 
   redis:
     image: redis:7.2-alpine3.19
@@ -24,8 +35,8 @@ services:
     ports:
       - '6379:6379'
     command: redis-server --save 20 1 --loglevel warning
-    volumes: 
-      - cache:/data
+    # volumes: 
+      # - cache:/data
 
   db:
     image: postgres:16.1-alpine3.19

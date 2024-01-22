@@ -18,7 +18,7 @@ export function createLoggerWithContext(context?: string) {
       format: "YY-MM-DD HH:mm:ss",
     }),
     winston.format.printf((info) =>
-      `${correlator?.getId() || ""} ${info["label"]}  ${info["timestamp"]}  ${info.level} : ${info.message}`.trim(),
+      `${correlator?.getId() || ""} ${info["label"]} ${process.pid} ${info["timestamp"]}  ${info.level} : ${info.message}`.trim(),
     ),
   );
 

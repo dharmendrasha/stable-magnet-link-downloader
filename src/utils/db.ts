@@ -5,7 +5,6 @@ export const getDataSource = () => {
   if (!appDatasource.isInitialized) {
     throw new Error(`appDatasource is not initialized`);
   }
-
   return appDatasource;
 };
 

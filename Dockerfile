@@ -12,6 +12,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 RUN echo ${TZ} >  /etc/timezone
 
+RUN apt update \
+   && apt install -y python-is-python3 python3 make g++ 
+
 COPY package*.json .
 
 RUN npm install
