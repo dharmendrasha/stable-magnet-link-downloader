@@ -62,17 +62,26 @@ export async function ifExists(hash: string) {
 
 export async function saveToTheDatabase(info: TorrentInfo) {
   const repo = getRepository(MagnetRequests);
-  const created = repo.create({
+  const data = {
     link: info.magnetURI,
     name: info.name,
     size: info.size,
     info: info,
     hash: info.infoHash,
-  });
+  };
+  const created = repo.create(data);
 
-  return repo.upsert(created, {
-    conflictPaths: ["hash"],
-  });
+  //check
+  const check = await repo.findOne({ where: { hash: created.hash } });
+  if (check) {
+    //update
+
+    await repo.update({ id: check.id }, data);
+    return { ...check, ...data };
+  }
+
+  const saved = await repo.save(created);
+  return saved;
 }
 
 export async function GetMetaDataOfTorrent(parsedTorrent: ParsedTorrent) {
