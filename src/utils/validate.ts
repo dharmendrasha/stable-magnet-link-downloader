@@ -3,7 +3,8 @@ import { AnyZodObject } from "zod";
 
 // ...
 
-export const validate = (schema: AnyZodObject) =>
+export const validate =
+  (schema: AnyZodObject) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       await schema.parseAsync({
@@ -15,4 +16,4 @@ export const validate = (schema: AnyZodObject) =>
     } catch (error) {
       return res.status(400).json(error);
     }
-};
+  };

@@ -1,18 +1,16 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Logger } from 'typeorm/logger/Logger'
-import { logger } from './logger.js'
-import { PlatformTools } from 'typeorm/platform/PlatformTools.js'
-import { LoggerOptions, QueryRunner } from 'typeorm'
-
+import { Logger } from "typeorm/logger/Logger";
+import { logger } from "./logger.js";
+import { PlatformTools } from "typeorm/platform/PlatformTools.js";
+import { LoggerOptions, QueryRunner } from "typeorm";
 
 export class DBLogger implements Logger {
-  private logger = logger
+  private logger = logger;
   // -------------------------------------------------------------------------
   // Constructor
   // -------------------------------------------------------------------------
-  constructor(private options?: LoggerOptions) {
-  }
+  constructor(private options?: LoggerOptions) {}
   // -------------------------------------------------------------------------
   // Public Methods
   // -------------------------------------------------------------------------
@@ -20,20 +18,18 @@ export class DBLogger implements Logger {
    * Logs query and parameters used in it.
    */
   //@ts-ignore
-  logQuery(
-    query: string, parameters?: any[], _?: QueryRunner,
-  ) {
+  logQuery(query: string, parameters?: any[], _?: QueryRunner) {
     if (
-      this.options === 'all' ||
+      this.options === "all" ||
       this.options === true ||
-      (Array.isArray(this.options) && this.options.indexOf('query') !== -1)
+      (Array.isArray(this.options) && this.options.indexOf("query") !== -1)
     ) {
       const sql =
         query +
         (parameters && parameters.length
-          ? ' -- PARAMETERS: ' + this.stringifyParams(parameters)
-          : '')
-      this.logger.debug(PlatformTools.highlightSql(sql), 'query')
+          ? " -- PARAMETERS: " + this.stringifyParams(parameters)
+          : "");
+      this.logger.debug(PlatformTools.highlightSql(sql), "query");
     }
   }
   /**
@@ -41,20 +37,23 @@ export class DBLogger implements Logger {
    */
   //@ts-ignore
   logQueryError(
-    error: string | Error, query: string, parameters?: any[], _?: QueryRunner
+    error: string | Error,
+    query: string,
+    parameters?: any[],
+    _?: QueryRunner,
   ) {
     if (
-      this.options === 'all' ||
+      this.options === "all" ||
       this.options === true ||
-      (Array.isArray(this.options) && this.options.indexOf('error') !== -1)
+      (Array.isArray(this.options) && this.options.indexOf("error") !== -1)
     ) {
       const sql =
         query +
         (parameters && parameters.length
-          ? ' -- PARAMETERS: ' + this.stringifyParams(parameters)
-          : '')
-      this.logger.error('query: ' + sql)
-      this.logger.error(`error:`, error)
+          ? " -- PARAMETERS: " + this.stringifyParams(parameters)
+          : "");
+      this.logger.error("query: " + sql);
+      this.logger.error(`error:`, error);
     }
   }
   /**
@@ -62,15 +61,18 @@ export class DBLogger implements Logger {
    */
   //@ts-ignore
   logQuerySlow(
-    time: number, query: string, parameters?: any[], _?: QueryRunner
+    time: number,
+    query: string,
+    parameters?: any[],
+    _?: QueryRunner,
   ) {
     const sql =
       query +
       (parameters && parameters.length
-        ? ' -- PARAMETERS: ' + this.stringifyParams(parameters)
-        : '')
-    this.logger.warn(PlatformTools.highlightSql(sql), `query is slow:`)
-    this.logger.warn(String(time), `execution time:`)
+        ? " -- PARAMETERS: " + this.stringifyParams(parameters)
+        : "");
+    this.logger.warn(PlatformTools.highlightSql(sql), `query is slow:`);
+    this.logger.warn(String(time), `execution time:`);
   }
   /**
    * Logs events from the schema build process.
@@ -78,49 +80,45 @@ export class DBLogger implements Logger {
   //@ts-ignore
   logSchemaBuild(message: string, queryRunner: QueryRunner) {
     if (
-      this.options === 'all' ||
-      (Array.isArray(this.options) && this.options.indexOf('schema') !== -1)
+      this.options === "all" ||
+      (Array.isArray(this.options) && this.options.indexOf("schema") !== -1)
     ) {
-      this.logger.info(message)
+      this.logger.info(message);
     }
   }
   /**
    * Logs events from the migration run process.
    */
   logMigration(message: string, _: QueryRunner) {
-    this.logger.info(message)
+    this.logger.info(message);
   }
   /**
    * Perform logging using given logger, or by default to the console.
    * Log has its own level and message.
    */
-  log(
-    level: 'log' | 'info' | 'warn',
-    message: string,
-    _: QueryRunner,
-  ) {
+  log(level: "log" | "info" | "warn", message: string, _: QueryRunner) {
     switch (level) {
-      case 'log':
+      case "log":
         if (
-          this.options === 'all' ||
-          (Array.isArray(this.options) && this.options.indexOf('log') !== -1)
+          this.options === "all" ||
+          (Array.isArray(this.options) && this.options.indexOf("log") !== -1)
         )
-          this.logger.info(message)
-        break
-      case 'info':
+          this.logger.info(message);
+        break;
+      case "info":
         if (
-          this.options === 'all' ||
-          (Array.isArray(this.options) && this.options.indexOf('info') !== -1)
+          this.options === "all" ||
+          (Array.isArray(this.options) && this.options.indexOf("info") !== -1)
         )
-          this.logger.debug(message, 'query_info')
-        break
-      case 'warn':
+          this.logger.debug(message, "query_info");
+        break;
+      case "warn":
         if (
-          this.options === 'all' ||
-          (Array.isArray(this.options) && this.options.indexOf('warn') !== -1)
+          this.options === "all" ||
+          (Array.isArray(this.options) && this.options.indexOf("warn") !== -1)
         )
-          this.logger.warn(PlatformTools.warn(message))
-        break
+          this.logger.warn(PlatformTools.warn(message));
+        break;
     }
   }
   // -------------------------------------------------------------------------
@@ -132,10 +130,10 @@ export class DBLogger implements Logger {
    */
   stringifyParams(parameters: any) {
     try {
-      return JSON.stringify(parameters)
+      return JSON.stringify(parameters);
     } catch (error) {
       // most probably circular objects in parameters
-      return parameters
+      return parameters;
     }
   }
 }

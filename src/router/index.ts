@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { expressRouter } from "../modules/router.combine.js";
-const mainExprouter = Router()
+const mainExprouter = Router();
 
-mainExprouter.use(expressRouter)
+mainExprouter.use(expressRouter);
 
-export { mainExprouter }
+export { mainExprouter };
