@@ -13,10 +13,10 @@ Download magnet urls with stablity.
 
 ### Features
 
-1. download torrent files ![not available](media/not-available.png)
-2. Auto resume when stopped ![not available](media/not-available.png)
-3. Auto Timeout when not procceding ![not available](media/not-available.png)
-4. Trigger events like ![not available](media/not-available.png)
+1. download torrent files ![not available](media/check.png)
+2. Auto resume when stopped ![not available](media/check.png)
+3. Auto Timeout when not procceding ![not available](media/check.png)
+4. Trigger events like ![not available](media/check.png)
 
     a. downloaded
 
@@ -25,5 +25,3 @@ Download magnet urls with stablity.
     c. started
     
     d. timedout
-
-
