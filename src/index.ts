@@ -9,6 +9,7 @@ import { optimalNumThreads } from "./utils/calculate-worker-threads.js";
 import { redis } from "./utils/queue/bull.js";
 import gracefulShutdown from "http-graceful-shutdown";
 import { worker } from "./modules/torrent/worker/run.js";
+
 wtfNode.dump();
 
 process.on("uncaughtException", function (err) {
