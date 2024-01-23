@@ -38,6 +38,9 @@ export default async function processTorrent(job: SandboxedJob) {
     // parentPort.postMessage('error') // always sent one message when job is finished.
     logger.error(e);
     console.error(e);
+    if (appDatasource.isInitialized) {
+      await appDatasource.destroy();
+    }
     return Promise.reject(e);
   }
 }

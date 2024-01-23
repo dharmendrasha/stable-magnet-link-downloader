@@ -12,8 +12,20 @@ ONLY="${2:-'no'}"
 if [ "$TO_DO" = "--install" ]; then
   echo "installing deps for=$ONLY"
   npm i $ONLY
+  docker compose run -it api npm i $ONLY
   echo "installing dev deps for=$ONLY if any"
   npm i -D @types/$ONLY
+  docker compose run -it api npm i -D @types/$ONLY
+  exit 0
+fi
+
+if [ "$TO_DO" = "--uninstall" ]; then
+  echo "installing deps for=$ONLY"
+  npm uninstall $ONLY
+  docker compose run -it api npm uninstall $ONLY
+  echo "installing dev deps for=$ONLY if any"
+  npm uninstall @types/$ONLY
+  docker compose run -it api npm uninstall @types/$ONLY
   exit 0
 fi
 

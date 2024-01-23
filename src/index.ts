@@ -9,20 +9,17 @@ import { optimalNumThreads } from "./utils/calculate-worker-threads.js";
 import { redis } from "./utils/queue/bull.js";
 import gracefulShutdown from "http-graceful-shutdown";
 import { worker } from "./modules/torrent/worker/run.js";
+
 wtfNode.dump();
 
 process.on("uncaughtException", function (err) {
   const logger = createLoggerWithContext("uncaughtException");
   // Handle the error safely
-  console.log(err);
   logger.error(err);
 });
 
 process.on("unhandledRejection", (reason, promise) => {
   const logger = createLoggerWithContext("unhandledRejection");
-
-  // Handle the error safely
-  console.error(reason);
   logger.error({ reason, promise });
 });
 
@@ -37,6 +34,8 @@ appDatasource
 
     logger.info(`redis connection status=${redis.status}`);
 
+    await appDatasource.runMigrations();
+
     const server = app.listen(APPLICATION_PORT, "0.0.0.0", () => {
       logger.info(
         `application started visit = http://0.0.0.0:${APPLICATION_PORT}`,
@@ -50,9 +49,12 @@ appDatasource
     gracefulShutdown(server, {
       development: true,
       preShutdown: async (signal?: string) => {
+        await worker.close(true);
         logger.info(`preShutdown: received signal ${signal}`);
       },
       onShutdown: async (sig?: string) => {
+        redis.disconnect();
+        await appDatasource.destroy();
         logger.info(`onShutdown: received signal ${sig}`);
       },
       finally: () => {
