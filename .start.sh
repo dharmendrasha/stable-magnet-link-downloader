@@ -19,6 +19,16 @@ if [ "$TO_DO" = "--install" ]; then
   exit 0
 fi
 
+if [ "$TO_DO" = "--uninstall" ]; then
+  echo "installing deps for=$ONLY"
+  npm uninstall $ONLY
+  docker compose run -it api npm uninstall $ONLY
+  echo "installing dev deps for=$ONLY if any"
+  npm uninstall @types/$ONLY
+  docker compose run -it api npm uninstall @types/$ONLY
+  exit 0
+fi
+
 # Simple if condition
 if [ "$TO_DO" = "--generate" ]; then
   echo "generating migration for=$ONLY"

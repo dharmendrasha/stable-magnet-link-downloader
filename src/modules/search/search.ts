@@ -1,10 +1,11 @@
 import { Request, Response } from "express";
-import TorrentSearchApis from "torrent-search-api";
+import { defaultProviders } from "../../lib/search/providers/index.js";
+import { search } from "../../lib/search/index.js";
 import { z } from "zod";
 
 const query = z.object({
   q: z.string(),
-  category: z.string(),
+  catagory: z.string().optional(),
 });
 
 export const schema = z.object({
@@ -15,9 +16,9 @@ export async function Search(req: Request, res: Response) {
   const request = req.query as z.infer<typeof query>;
   const q = request.q;
 
-  TorrentSearchApis.enableProvider("Yts");
+  const find = await search(defaultProviders, q, {
+    category: request.catagory,
+  });
 
-  const search = TorrentSearchApis.search(q, request.category, 50);
-
-  res.json(search);
+  res.json({ data: find, message: "torrent found" });
 }

@@ -73,3 +73,5 @@ export const JOB_DELAY = Number(env["JOB_DELAY"] || 1000);
 export const WORKER_CONCURRENCY = Number(env["WORKER_CONCURRENCY"] || 1);
 
 export const WORKER_LIMIER = Number(env["WORKER_LIMIER"] || 1);
+
+export const SHOULD_USE_PROXY = env["SHOULD_USE_PROXY"] === "true";
