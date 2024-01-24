@@ -13,13 +13,13 @@ app.use(RequestMiddleware);
 app.disable("x-powered-by");
 // parse application/x-www-form-urlencoded
 app.use(BodyParser.urlencoded({ extended: false }));
-
+app.use(BasicAuth);
 // parse application/json
 app.use(BodyParser.json());
 
 app.use(mainExprouter);
 
-app.use("/admin/queues", BasicAuth, serverAdapter.getRouter());
+app.use("/admin/queues", serverAdapter.getRouter());
 
 app.use(errorHandler);
 export { app };
