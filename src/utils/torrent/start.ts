@@ -4,11 +4,11 @@ import path from "path";
 import {
   AWS_BUCKET,
   MAGNET_DOWNLOAD_PROCESS,
-  TORRENT_TIMEOUT,
+  METADATA_FETCH_TIMEOUT,
   getDownloadPath,
 } from "../../config.js";
 import { TorService } from "../firebase/torrent.service.js";
-import { constructData } from "../../modules/torrent/accept.js";
+import { constructData, getById } from "../../modules/torrent/accept.js";
 import fs from "fs";
 import { S3Util } from "../aws/s3/main.js";
 import { NotAcceptableException } from "../Error.js";
@@ -21,6 +21,7 @@ export type FileStored = {
   size: number;
   torHash: string;
   name: string;
+  s3Path?: string;
 };
 
 export class MagnetQueue {
@@ -60,7 +61,7 @@ export class MagnetQueue {
           logger.info("Timeout while fetching torrent metadata.");
           rjt(this.constructData(tor));
         });
-      }, TORRENT_TIMEOUT);
+      }, METADATA_FETCH_TIMEOUT);
 
       tor.on("metadata", () => {
         logger.info("Metadata parsed...");
@@ -174,6 +175,8 @@ export class MagnetQueue {
   ) {
     const filePath = path.resolve(this.tempPath, hash);
 
+    this.job.log(`UPLOADING: uploading files to the s3 bucket`);
+
     const remotePaths = await Promise.all(
       savedFiles.files.map(async (file) => {
         const remotePath = `torrent/${hash}/${savedFiles.torHash}/${file}`;
@@ -183,11 +186,17 @@ export class MagnetQueue {
           `localfilePath=${localfile} remoteFile=${remotePath} bucket=${AWS_BUCKET}`,
         );
         const fileRead = fs.createReadStream(localfile);
+        this.job.log(`UPLOADING: started uploading file=${localfile}`);
+
         await S3Util.parrallelUpload(remotePath, fileRead);
+        this.job.log(`UPLOADING: uploaded file=${localfile} to ${remotePath}`);
 
-        // fs.unlinkSync(localfile);
+        fs.unlinkSync(localfile);
+        this.job.log(`UPLOADING: deleted file=${localfile}`);
 
-        return { remotePath, file: file, bucket: AWS_BUCKET };
+        const pRemotePath = `s3://${AWS_BUCKET}/${remotePath}`;
+
+        return { s3Path: pRemotePath, file: file, bucket: AWS_BUCKET };
       }),
     );
     return remotePaths;
@@ -201,6 +210,13 @@ export class MagnetQueue {
 
     try {
       logger.info(`download file path=${this.tempPath}`);
+      this.job.log(`starting the progress`);
+
+      const info = await getById(hash);
+
+      if (!info) {
+        throw new Error(`id=${hash} not found in the database`);
+      }
 
       const client = this.torClient();
 
@@ -216,12 +232,15 @@ export class MagnetQueue {
             is_error: true,
             updated_at: Date.now(),
             message: "not enough peers found to download the file.",
-            status: STATUS.FAILED,
+            status: STATUS.TIMEDOUT,
           }),
+          this.job.log(`FAILED: not enough peers found to download the file.`),
         ]);
 
         return false;
       }
+
+      this.job.log(`validated the link`);
 
       const savedFiles = await this.startMagnet(
         magnetLink,
@@ -243,6 +262,9 @@ export class MagnetQueue {
             message: "unable to download the files due to connection errors",
             status: STATUS.FAILED,
           }),
+          this.job.log(
+            `FAILED: unable to download the files due to connection errors`,
+          ),
         ]);
 
         return false;
@@ -257,12 +279,24 @@ export class MagnetQueue {
       const rPath = path.resolve(this.tempPath, hash, savedFiles.name);
       const sPath = path.resolve(rPath, "..");
 
+      const s3Prefix = `s3://${AWS_BUCKET}/torrent/${hash}/${info.hash}`;
+
       // generate direct tree
-      const tree = directoryTree(rPath, undefined, sPath, {
-        attributes: ["extension", "type", "size", "localpath"],
-      });
+      const tree = directoryTree(
+        s3Prefix,
+        rPath,
+        undefined,
+        sPath,
+        {
+          attributes: ["extension", "type", "size", "localpath", "remotepath"],
+        },
+        undefined,
+        undefined,
+        undefined,
+      );
 
       // upload it to the remote path
+      this.job.log("uploading: uploading files to s3");
       await this.uploadFilesToS3(hash, savedFiles, logger);
 
       await Promise.allSettled([
@@ -276,6 +310,7 @@ export class MagnetQueue {
           status: STATUS.COMPLETED,
           updated_at: Date.now(),
         }),
+        this.job.log("COMPLETED: job is completed"),
       ]);
 
       logger.info(`finished`);
