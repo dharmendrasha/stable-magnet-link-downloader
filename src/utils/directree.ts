@@ -49,6 +49,7 @@ export function isRegExp(regExp: { constructor: RegExpConstructor }): boolean {
  * @return {Object}
  */
 export function directoryTree(
+  s3Prefix: string,
   path: string,
   readPath?: string,
   rootPath?: string,
@@ -148,6 +149,16 @@ export function directoryTree(
           case "type":
             item.type = constants.FILE;
             break;
+          case "remotepath":
+            // eslint-disable-next-line prefer-rest-params
+            if (s3Prefix) {
+              if (!rootPath) {
+                throw new Error(`rootpath is ${rootPath}`);
+              }
+              const localpath = path.replace(rootPath, "") || name;
+              item.remotepath = `${s3Prefix}${localpath}`;
+            }
+            break;
           default:
             //@ts-ignore
             item[attribute] = stats[attribute];
@@ -172,6 +183,7 @@ export function directoryTree(
             }
 
             return directoryTree(
+              s3Prefix,
               PATH.join(readPath, child),
               readPath,
               rootPath,

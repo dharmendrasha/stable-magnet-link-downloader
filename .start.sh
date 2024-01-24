@@ -32,7 +32,7 @@ fi
 # Simple if condition
 if [ "$TO_DO" = "--generate" ]; then
   echo "generating migration for=$ONLY"
-  FOR=$ONLY npm run typeorm:migration-generate
+  docker compose run -e FOR=$ONLY -it api npm run typeorm:migration-generate
   exit 0
 fi
 
@@ -67,7 +67,7 @@ fi
 
 if [ "$TO_DO" = "--migrate-down" ]; then
   echo "reverting last migration"
-  FOR=$ONLY npm run typeorm:migration-down
+  docker compose run -e FOR=$ONLY -it api npm run typeorm:migration-down
   exit 0
 fi
 

@@ -4,7 +4,7 @@ import { Torrent, TorrentFile } from "webtorrent";
 import { METADATA_FETCH_TIMEOUT, getDownloadPath } from "../../config.js";
 import { logger } from "../../utils/logger.js";
 import { getRepository } from "../../utils/db.js";
-import { MagnetRequests } from "../../entity/index.js";
+import { MagnetRequests, STATUS } from "../../entity/index.js";
 
 export interface TorrentInfo {
   name: string;
@@ -35,8 +35,8 @@ export const getTotalFileSize = (torrent: TorrentFile[]) => {
 
 export const constructData = (torrent: Torrent): TorrentInfo => {
   const data = {
-    name: torrent.name,
-    infoHash: torrent.infoHash,
+    name: torrent.name || "no name",
+    infoHash: torrent.infoHash.toLowerCase(),
     magnetURI: torrent.magnetURI,
     peers: torrent.numPeers,
     created: torrent.created,
@@ -54,20 +54,33 @@ export const constructData = (torrent: Torrent): TorrentInfo => {
   return data;
 };
 
+export async function getById(id: string) {
+  const repo = getRepository(MagnetRequests);
+  const available = await repo.findOne({ where: { id } });
+  return available;
+}
+
 export async function ifExists(hash: string) {
+  hash = hash.toLowerCase();
   const repo = getRepository(MagnetRequests);
   const available = await repo.findOne({ where: { hash } });
   return available;
 }
 
-export async function saveToTheDatabase(info: TorrentInfo) {
+export async function saveToTheDatabase(
+  info: TorrentInfo,
+  status?: STATUS,
+  message?: string,
+) {
   const repo = getRepository(MagnetRequests);
   const data = {
     link: info.magnetURI,
     name: info.name,
     size: info.size,
     info: info,
-    hash: info.infoHash,
+    hash: info.infoHash.toLowerCase(),
+    status,
+    message,
   };
   const created = repo.create(data);
 
@@ -101,11 +114,22 @@ export async function GetMetaDataOfTorrent(parsedTorrent: ParsedTorrent) {
         logger.info("Timeout while fetching torrent metadata.");
       });
 
-      rej({
-        data: copyTorrent,
-        message:
-          "The torrent provided doesn't seem to have enough peers to fetch metadata. Returning limited info.",
-      });
+      saveToTheDatabase(copyTorrent, STATUS.TIMEDOUT, "acceptance timed out")
+        .then(() => {
+          rej({
+            data: copyTorrent,
+            message:
+              "The torrent provided doesn't seem to have enough peers to fetch metadata. Returning limited info.",
+          });
+        })
+        .catch((e) => {
+          logger.error(e);
+          rej({
+            data: copyTorrent,
+            message:
+              "The torrent provided doesn't seem to have enough peers to fetch metadata. Returning limited info.",
+          });
+        });
     }, METADATA_FETCH_TIMEOUT);
 
     torrent.on("metadata", () => {
@@ -114,18 +138,25 @@ export async function GetMetaDataOfTorrent(parsedTorrent: ParsedTorrent) {
       const info = constructData(torrent);
 
       //submit info into the database
-      saveToTheDatabase(info)
-        .then(() => {
+      saveToTheDatabase(
+        info,
+        STATUS.NOTED,
+        "noted and can start downloading request",
+      )
+        .then((val) => {
           torClient().remove(torrent, {}, () => {
             logger.info("Torrent removed.");
           });
-
-          res({ data: info });
+          res({
+            data: val,
+            message:
+              "torrent is correct and successfully parsed. Please try start command if you want to download it",
+          });
         })
         .catch((e) => {
           logger.error(e);
           rej({
-            data: info,
+            data: null,
             message:
               "something unwanted happen please try again or contact administrator.",
           });
@@ -141,11 +172,23 @@ export async function GetMetaDataOfTorrent(parsedTorrent: ParsedTorrent) {
 export async function AcceptTorrent(req: Request, res: Response) {
   const parsedTorrent = req.parsedTorrent;
 
+  const hash = parsedTorrent["infoHash"];
+
+  const alreadyDone = await ifExists(hash);
+
+  if (alreadyDone) {
+    res.status(303).jsonp({
+      message: `this request has already processed by us please try another and its status=${alreadyDone.status}`,
+      data: null,
+    });
+    return;
+  }
+
   GetMetaDataOfTorrent(parsedTorrent)
     .then((val) => {
       res.jsonp(val);
     })
     .catch((val) => {
-      res.status(504).jsonp(val);
+      res.status(504).jsonp({ ...val, data: null });
     });
 }

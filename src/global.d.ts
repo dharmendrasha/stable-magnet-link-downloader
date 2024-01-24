@@ -9,7 +9,7 @@ declare module "parse-torrent" {
 
 declare namespace Express {
   export interface Request {
-    parsedTorrent: ParsedTorrent;
+    parsedTorrent: Record<any, any>;
     startTime: number;
   }
 }

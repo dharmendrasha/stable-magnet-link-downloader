@@ -22,8 +22,7 @@ const repo = () => getRepository(MagnetRequests);
 export async function addJob(workerData: WorkerData) {
   const job = await q.add(q_name, workerData, {
     attempts: MAX_RETRY,
-    priority: 1,
-    delay: 0, // delay for 1 sec
+    delay: 1, // delay for 1 sec
     backoff: {
       delay: RETRY_DELAY,
       type: RETRY_STARATEGY,

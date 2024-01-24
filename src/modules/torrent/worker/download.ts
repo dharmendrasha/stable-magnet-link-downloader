@@ -18,7 +18,9 @@ export default async function processTorrent(job: SandboxedJob) {
   try {
     const data = job.data as WorkerData;
 
-    await appDatasource.initialize();
+    if (!appDatasource.isInitialized) {
+      await appDatasource.initialize();
+    }
 
     const logger = createLoggerWithContext(
       `worker:${data.contextId}:${data.id}` || correlator?.getId(),
@@ -33,6 +35,9 @@ export default async function processTorrent(job: SandboxedJob) {
     const tree = await magnet.process({ url: data.data, hash: data.id });
 
     logger.info("processing is finished");
+    if (appDatasource.isInitialized) {
+      await appDatasource.destroy();
+    }
     return Promise.resolve(tree);
   } catch (e) {
     // parentPort.postMessage('error') // always sent one message when job is finished.

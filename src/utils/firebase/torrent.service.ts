@@ -64,6 +64,14 @@ export class TorService {
       );
     }
 
+    if (data.status === STATUS.TIMEDOUT) {
+      // update
+      await this.repo().update(
+        { id: hash },
+        { status: STATUS.TIMEDOUT, message: data.message },
+      );
+    }
+
     if (data.status === STATUS.COMPLETED) {
       await this.repo().update(
         { id: hash },
@@ -103,6 +111,10 @@ export class TorService {
   ) {
     const ref = this.getRef().child(hash);
     return ref.set(data);
+  }
+
+  getProgress(hash: string) {
+    return this.getRef().child(hash).get();
   }
 
   async saveMagnetData(url: string, id: string) {

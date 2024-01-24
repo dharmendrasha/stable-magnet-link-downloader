@@ -22,21 +22,13 @@ export async function downloadTorrent(req: Request, res: Response) {
   }
 
   // check in the database
-  const available = await ifExists(bdy.hash);
+  const available = await ifExists(bdy.hash.toLowerCase());
 
   if (!available) {
     return res.status(404).jsonp({ body: null, message: "hash not found" });
   }
 
-  if (
-    [
-      STATUS.COMPLETED,
-      STATUS.IN_QUEUE,
-      STATUS.FAILED,
-      STATUS.IN_PROGRESS,
-    ].includes(available.status) &&
-    bdy.retry === false
-  ) {
+  if (![STATUS.NOTED].includes(available.status) && bdy.retry === false) {
     return res.status(406).jsonp({
       body: null,
       message: `file cannot be downloaded because its already been ${available.status.toLocaleLowerCase()}`,
