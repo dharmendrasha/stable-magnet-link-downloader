@@ -30,11 +30,18 @@ jobs:
               id: login-ecr
               uses: aws-actions/amazon-ecr-login@v2.0.1
 
+            - name: Set outputs
+              id: vars
+              run: echo "sha_short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+            - name: Check outputs
+              run: echo ${{ steps.vars.outputs.sha_short }}
+
             - name: Build, tag, and push image to Amazon ECR
               id: build-image
               env:
                 ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-                IMAGE_TAG: ${{ github.sha }}
+                IMAGE_TAG: ${{ steps.vars.outputs.sha_short }}
                 ECR_REPOSITORY: ${{ vars.ECR_REPO }}
               run: |
                 # Build a docker container and
