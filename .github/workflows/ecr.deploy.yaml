@@ -21,7 +21,7 @@ jobs:
 
             - name: create firebase json file
               run: |
-                echo "${{ secrets.FIREBASE_JSON }}" > .firebase.json
+                echo '${{ secrets.FIREBASE_JSON }}' > .firebase.json
 
             - name: Configure AWS credentials
               uses: aws-actions/configure-aws-credentials@v4.0.1
