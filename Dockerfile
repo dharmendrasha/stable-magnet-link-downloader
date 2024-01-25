@@ -30,6 +30,8 @@ WORKDIR /prod
 
 COPY --from=base /app/node_modules node_modules
 COPY --from=base /app/dist dist
+COPY --from=base /app/package.json package.json 
+COPY --from=base /app/package-lock.json package-lock.json
 
 ENV PORT=80
 ENV IS_DOCKER=true
