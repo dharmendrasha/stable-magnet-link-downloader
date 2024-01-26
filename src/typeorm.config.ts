@@ -25,7 +25,7 @@ export const datasourceConfig: DataSourceOptions = {
   database: DB_NAME,
   entities: entities,
   synchronize: false,
-  migrations: [path.join(__dirname, "/migration/*.ts")],
+  migrations: [path.join(__dirname, "/migration/*.js")],
   logNotifications: true,
   installExtensions: true,
   logging: dbLogging(),

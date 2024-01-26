@@ -28,7 +28,7 @@ export default async function processTorrent(job: SandboxedJob) {
 
     logger.info(`sandbox_job=${job.id}`);
 
-    const tor = new TorService(logger);
+    const tor = new TorService(logger, job);
     await tor.saveMagnetData(data.data, data.id);
 
     const magnet = new MagnetQueue(tor, logger, job);

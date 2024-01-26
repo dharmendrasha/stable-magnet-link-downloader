@@ -14,7 +14,9 @@ import { S3Util } from "../aws/s3/main.js";
 import { NotAcceptableException } from "../Error.js";
 import { directoryTree } from "../directree.js";
 import { SandboxedJob } from "bullmq";
+import { WorkerData } from "../../modules/torrent/worker/run.js";
 import { STATUS } from "../../entity/torrent.entity.js";
+import { Webhook } from "../Webhook.js";
 
 export type FileStored = {
   files: string[];
@@ -28,7 +30,7 @@ export class MagnetQueue {
   constructor(
     protected readonly torService: TorService,
     protected readonly logger: winston.Logger,
-    protected readonly job: SandboxedJob,
+    protected readonly job: SandboxedJob<WorkerData>,
   ) {}
 
   protected torClient = () => {
@@ -109,8 +111,14 @@ export class MagnetQueue {
 
         await Promise.allSettled([
           this.torService.updateInprogressInDb(hash),
+          Webhook.send(
+            this.job.data.hash,
+            STATUS.IN_PROGRESS,
+            "job is under progress",
+          ),
           this.torService.update(hash, {
             size: torrent.length,
+            status: STATUS.IN_PROGRESS,
             torhash: torrent.infoHash,
             filename: torrent.name,
             updated_at: Date.now(),

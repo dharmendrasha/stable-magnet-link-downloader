@@ -39,6 +39,7 @@ export async function downloadTorrent(req: Request, res: Response) {
     data: available.link,
     contextId: `req:${correlator?.getId()}`,
     id: available.id,
+    hash: available.hash,
   });
 
   return res.jsonp(bdy);

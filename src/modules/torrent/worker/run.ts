@@ -5,7 +5,7 @@ import {
   RETRY_DELAY,
   RETRY_STARATEGY,
   // TORRENT_TIMEOUT,
-  // WORKER_CONCURRENCY,
+  WORKER_CONCURRENCY,
   // WORKER_LIMIER,
 } from "../../../config.js";
 import { createLoggerWithContext } from "../../../utils/logger.js";
@@ -13,7 +13,7 @@ import { q, q_name, redis } from "../../../utils/queue/bull.js";
 import { Worker, Job } from "bullmq";
 import { MagnetRequests, STATUS } from "../../../entity/torrent.entity.js";
 import { getRepository } from "../../../utils/db.js";
-import { optimalNumThreads } from "../../../utils/calculate-worker-threads.js";
+import { Webhook } from "../../../utils/Webhook.js";
 
 const workerLogger = createLoggerWithContext(q_name);
 
@@ -41,13 +41,14 @@ export type WorkerData = {
   contextId: string;
   id: string;
   job_id?: string;
+  hash: string;
 };
 
 export const worker = new Worker(
   q_name,
   new URL("./download.js", import.meta.url),
   {
-    concurrency: optimalNumThreads,
+    concurrency: WORKER_CONCURRENCY,
     useWorkerThreads: true,
     connection: redis,
     autorun: false,
@@ -88,7 +89,20 @@ for (const event of eventsType) {
         return;
       }
       const id = data.id;
-      await repo().update({ id }, { status: STATUS.PAUSED });
+      await Promise.all([
+        Webhook.send(
+          j.data.hash,
+          STATUS.PAUSED,
+          err?.message || "job has been paused",
+        ),
+        repo().update(
+          { id },
+          {
+            status: STATUS.PAUSED,
+            message: err?.message || "job has been paused",
+          },
+        ),
+      ]);
     }
 
     if (event === "completed") {
@@ -106,10 +120,20 @@ for (const event of eventsType) {
         return;
       }
       const id = data.id;
-      await repo().update(
-        { id },
-        { status: STATUS.FAILED, message: err?.message },
-      );
+      await Promise.all([
+        Webhook.send(
+          j.data.hash,
+          STATUS.FAILED,
+          err?.message || "job has been failed",
+        ),
+        repo().update(
+          { id },
+          {
+            status: STATUS.FAILED,
+            message: err?.message || "job has been failed",
+          },
+        ),
+      ]);
     }
   });
 }
