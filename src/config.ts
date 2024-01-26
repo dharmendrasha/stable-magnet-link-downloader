@@ -75,3 +75,5 @@ export const WORKER_CONCURRENCY = Number(env["WORKER_CONCURRENCY"] || 1);
 export const WORKER_LIMIER = Number(env["WORKER_LIMIER"] || 1);
 
 export const SHOULD_USE_PROXY = env["SHOULD_USE_PROXY"] === "true";
+
+export const WEBHOOK_URL = env["WEBHOOK_URL"];

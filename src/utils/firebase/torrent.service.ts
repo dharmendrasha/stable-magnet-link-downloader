@@ -5,6 +5,9 @@ import { S3Util } from "../aws/s3/main.js";
 import winston from "winston";
 import { MagnetRequests, STATUS } from "../../entity/torrent.entity.js";
 import { getRepository } from "../db.js";
+import { Webhook } from "../Webhook.js";
+import { SandboxedJob } from "bullmq";
+import { WorkerData } from "../../modules/torrent/worker/run.js";
 
 export type IUpdateData = {
   progress?: number;
@@ -27,7 +30,10 @@ export class NotFoundException extends Error {
 export class TorService {
   protected repo = () => getRepository(MagnetRequests);
 
-  constructor(private logger: winston.Logger) {}
+  constructor(
+    private logger: winston.Logger,
+    private job: SandboxedJob<WorkerData>,
+  ) {}
 
   private getCollection() {
     return firestore.collection("torrent");
@@ -55,33 +61,53 @@ export class TorService {
     const doc = this.getCollection().doc(hash);
 
     // in progress
+
     // failed
     if (data.status === STATUS.FAILED) {
-      // update
-      await this.repo().update(
-        { id: hash },
-        { status: STATUS.FAILED, message: data.message },
-      );
+      await Promise.all([
+        Webhook.send(
+          this.job.data.hash,
+          STATUS.FAILED,
+          data.message || "Job has failed",
+        ),
+        this.repo().update(
+          { id: hash },
+          { status: STATUS.FAILED, message: data.message },
+        ),
+      ]);
     }
 
     if (data.status === STATUS.TIMEDOUT) {
-      // update
-      await this.repo().update(
-        { id: hash },
-        { status: STATUS.TIMEDOUT, message: data.message },
-      );
+      await Promise.all([
+        Webhook.send(
+          this.job.data.hash,
+          STATUS.TIMEDOUT,
+          data.message || "job has been timedout",
+        ),
+        this.repo().update(
+          { id: hash },
+          { status: STATUS.TIMEDOUT, message: data.message },
+        ),
+      ]);
     }
 
     if (data.status === STATUS.COMPLETED) {
-      await this.repo().update(
-        { id: hash },
-        {
-          status: STATUS.COMPLETED,
-          message: data.message || "",
-          tree: { ...data.tree },
-          size: data.size,
-        },
-      );
+      await Promise.all([
+        Webhook.send(
+          this.job.data.hash,
+          STATUS.COMPLETED,
+          data.message || "job has been completed",
+        ),
+        this.repo().update(
+          { id: hash },
+          {
+            status: STATUS.COMPLETED,
+            message: data.message || "",
+            tree: { ...data.tree },
+            size: data.size,
+          },
+        ),
+      ]);
     }
     // completed
 
@@ -128,7 +154,7 @@ export class TorService {
     await Promise.allSettled([
       this.save(hash, {
         url,
-        status: "under_progress",
+        status: STATUS.IN_PROGRESS,
         filename: name || url,
         createdAt: Date.now(),
         updatedAt: Date.now(),
