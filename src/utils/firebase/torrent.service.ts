@@ -32,7 +32,7 @@ export class TorService {
 
   constructor(
     private logger: winston.Logger,
-    private job: SandboxedJob<WorkerData>,
+    private job?: SandboxedJob<WorkerData>,
   ) {}
 
   private getCollection() {
@@ -65,11 +65,13 @@ export class TorService {
     // failed
     if (data.status === STATUS.FAILED) {
       await Promise.all([
-        Webhook.send(
-          this.job.data.hash,
-          STATUS.FAILED,
-          data.message || "Job has failed",
-        ),
+        this.job
+          ? Webhook.send(
+              this.job.data.hash,
+              STATUS.FAILED,
+              data.message || "Job has failed",
+            )
+          : undefined,
         this.repo().update(
           { id: hash },
           { status: STATUS.FAILED, message: data.message },
@@ -79,11 +81,13 @@ export class TorService {
 
     if (data.status === STATUS.TIMEDOUT) {
       await Promise.all([
-        Webhook.send(
-          this.job.data.hash,
-          STATUS.TIMEDOUT,
-          data.message || "job has been timedout",
-        ),
+        this.job
+          ? Webhook.send(
+              this.job.data.hash,
+              STATUS.TIMEDOUT,
+              data.message || "job has been timedout",
+            )
+          : undefined,
         this.repo().update(
           { id: hash },
           { status: STATUS.TIMEDOUT, message: data.message },
@@ -93,11 +97,13 @@ export class TorService {
 
     if (data.status === STATUS.COMPLETED) {
       await Promise.all([
-        Webhook.send(
-          this.job.data.hash,
-          STATUS.COMPLETED,
-          data.message || "job has been completed",
-        ),
+        this.job
+          ? Webhook.send(
+              this.job.data.hash,
+              STATUS.COMPLETED,
+              data.message || "job has been completed",
+            )
+          : undefined,
         this.repo().update(
           { id: hash },
           {
