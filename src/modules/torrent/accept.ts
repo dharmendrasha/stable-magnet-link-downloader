@@ -179,7 +179,7 @@ export async function AcceptTorrent(req: Request, res: Response) {
   if (alreadyDone) {
     res.status(303).jsonp({
       message: `this request has already processed by us please try another and its status=${alreadyDone.status}`,
-      data: null,
+      data: alreadyDone,
     });
     return;
   }
