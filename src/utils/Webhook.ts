@@ -17,7 +17,6 @@ export class Webhook {
             error.request?._currentRequest?.method || error?.config?.method
           } message="${error?.message}"`,
         );
-        console.log(JSON.stringify(error.response?.data));
         throw error;
       },
     );

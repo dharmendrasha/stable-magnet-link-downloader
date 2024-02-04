@@ -226,6 +226,28 @@ export class MagnetQueue {
         throw new Error(`id=${hash} not found in the database`);
       }
 
+
+      if(info.tree && Object.keys(info.tree as object).length > 0){
+        await Promise.allSettled([
+          this.job.updateProgress(100),
+          this.torService.deleteProgress(hash),
+          this.torService.update(hash, {
+            size: info.size,
+            progress: 100,
+            torhash: info.hash,
+            tree: info.tree as object,
+            status: STATUS.COMPLETED,
+            updated_at: Date.now(),
+          }),
+          this.job.log("COMPLETED: job was already been completed"),
+        ]);
+
+
+        logger.info(`finished`);
+        return Promise.resolve(info.tree);
+      }
+
+
       const client = this.torClient();
 
       const exists = await this.verifyIfExists(magnetLink, client, logger, hash)
