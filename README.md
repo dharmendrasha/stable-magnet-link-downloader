@@ -27,3 +27,5 @@ Download magnet urls with stablity.
     d. timedout
 
 5. search torrent from multiple providers ![available](media/check.png)
+
+<!-- Security scan triggered at 2025-09-01 23:09:57 -->
