@@ -29,3 +29,5 @@ Download magnet urls with stablity.
 5. search torrent from multiple providers ![available](media/check.png)
 
 <!-- Security scan triggered at 2025-09-01 23:09:57 -->
+
+<!-- Security scan triggered at 2025-09-01 23:13:19 -->
